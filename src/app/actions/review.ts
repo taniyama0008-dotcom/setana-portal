@@ -46,7 +46,7 @@ export async function submitReview(
     rating,
     text: text || null,
     visit_date: visitDate,
-    status: 'public',
+    status: 'published',
   })
 
   if (error) {

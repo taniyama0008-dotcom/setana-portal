@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { SESSION_UID_COOKIE, SESSION_ROLE_COOKIE, COOKIE_OPTIONS } from '@/lib/session'
 
 interface LineVerifyResponse {
   iss: string
-  sub: string      // LINE user ID
+  sub: string
   aud: string
   exp: number
   iat: number
@@ -14,6 +15,11 @@ interface LineVerifyResponse {
   error_description?: string
 }
 
+function setSessionCookies(res: NextResponse, userId: string, role: string) {
+  res.cookies.set(SESSION_UID_COOKIE, userId, COOKIE_OPTIONS)
+  res.cookies.set(SESSION_ROLE_COOKIE, role, COOKIE_OPTIONS)
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
   const idToken = body?.idToken as string | undefined
@@ -22,7 +28,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'idToken is required' }, { status: 400 })
   }
 
-  // LINE ID トークンを検証
   const params = new URLSearchParams({
     id_token: idToken,
     client_id: process.env.LINE_LOGIN_CHANNEL_ID!,
@@ -37,11 +42,9 @@ export async function POST(req: NextRequest) {
   const verified: LineVerifyResponse = await verifyRes.json()
 
   if (!verifyRes.ok || verified.error || !verified.sub) {
-    console.error('[LINE auth] token verify failed:', verified)
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
   }
 
-  // チャンネルIDが一致するか確認
   if (verified.aud !== process.env.LINE_LOGIN_CHANNEL_ID) {
     return NextResponse.json({ error: 'Token audience mismatch' }, { status: 401 })
   }
@@ -50,29 +53,25 @@ export async function POST(req: NextRequest) {
   const displayName = verified.name ?? 'LINEユーザー'
   const pictureUrl = verified.picture ?? null
 
-  // Supabase: line_user_idで検索 → なければ新規作成
+  // 既存ユーザー検索
   const { data: existing } = await supabase
     .from('users')
-    .select('id, line_user_id, line_display_name')
+    .select('id, role')
     .eq('line_user_id', lineUserId)
     .maybeSingle()
 
   if (existing) {
-    // プロフィール情報を更新
     await supabase
       .from('users')
-      .update({
-        line_display_name: displayName,
-        line_picture_url: pictureUrl,
-      })
+      .update({ line_display_name: displayName, line_picture_url: pictureUrl })
       .eq('id', existing.id)
 
-    return NextResponse.json({ userId: existing.id, displayName, isNew: false })
+    const res = NextResponse.json({ userId: existing.id, displayName, role: existing.role, isNew: false })
+    setSessionCookies(res, existing.id, existing.role ?? 'user')
+    return res
   }
 
   // 新規ユーザー作成
-  // 同メールのユーザーが既存する場合はline_user_idを紐づける
-  // (メールはLINE基本プロフィールでは取得できないため、将来の拡張ポイント)
   const { data: newUser, error: insertError } = await supabase
     .from('users')
     .insert({
@@ -80,8 +79,9 @@ export async function POST(req: NextRequest) {
       line_display_name: displayName,
       line_picture_url: pictureUrl,
       nickname: displayName,
+      role: 'user',
     })
-    .select('id')
+    .select('id, role')
     .single()
 
   if (insertError) {
@@ -89,5 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }
 
-  return NextResponse.json({ userId: newUser.id, displayName, isNew: true })
+  const res = NextResponse.json({ userId: newUser.id, displayName, role: newUser.role, isNew: true })
+  setSessionCookies(res, newUser.id, newUser.role ?? 'user')
+  return res
 }
