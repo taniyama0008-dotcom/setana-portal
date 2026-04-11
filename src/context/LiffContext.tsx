@@ -67,12 +67,18 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 
           // セッションクッキーをサーバーに同期（失敗してもユーザー体験は維持）
           const idToken = liff.getIDToken()
+          console.log('[LIFF] getIDToken():', idToken ? `${idToken.slice(0, 20)}...` : 'null — openid scope が未設定の可能性')
           if (idToken) {
             fetch('/api/auth/line', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ idToken }),
-            }).catch((err) => console.warn('[LIFF] session sync failed:', err))
+            })
+              .then(async (r) => {
+                const json = await r.json().catch(() => null)
+                console.log('[LIFF] session sync —', r.status, json)
+              })
+              .catch((err) => console.warn('[LIFF] session sync failed:', err))
           }
         } catch (err) {
           console.error('[LIFF] getProfile failed:', err)

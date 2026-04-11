@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
     client_id: process.env.LINE_LOGIN_CHANNEL_ID!,
   })
 
+  console.log('[LINE auth] verifying token — client_id:', process.env.LINE_LOGIN_CHANNEL_ID, 'token prefix:', idToken.slice(0, 20))
+
   const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -41,11 +43,15 @@ export async function POST(req: NextRequest) {
 
   const verified: LineVerifyResponse = await verifyRes.json()
 
+  console.log('[LINE auth] verify response status:', verifyRes.status, 'body:', JSON.stringify(verified))
+
   if (!verifyRes.ok || verified.error || !verified.sub) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    console.error('[LINE auth] token invalid — error:', verified.error, verified.error_description)
+    return NextResponse.json({ error: 'Invalid token', detail: verified.error_description }, { status: 401 })
   }
 
   if (verified.aud !== process.env.LINE_LOGIN_CHANNEL_ID) {
+    console.error('[LINE auth] audience mismatch — aud:', verified.aud, 'expected:', process.env.LINE_LOGIN_CHANNEL_ID)
     return NextResponse.json({ error: 'Token audience mismatch' }, { status: 401 })
   }
 
