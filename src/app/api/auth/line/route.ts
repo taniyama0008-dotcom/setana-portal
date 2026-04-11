@@ -28,17 +28,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'idToken is required' }, { status: 400 })
   }
 
-  const params = new URLSearchParams({
-    id_token: idToken,
-    client_id: process.env.LINE_LOGIN_CHANNEL_ID!,
-  })
+  const channelId = process.env.LINE_LOGIN_CHANNEL_ID
+  if (!channelId) {
+    console.error('[LINE auth] LINE_LOGIN_CHANNEL_ID is not set')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
 
-  console.log('[LINE auth] verifying token — client_id:', process.env.LINE_LOGIN_CHANNEL_ID, 'token prefix:', idToken.slice(0, 20))
+  console.log('[LINE auth] verifying token — client_id:', channelId, 'token prefix:', idToken.slice(0, 20))
 
   const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
+    body: new URLSearchParams({ id_token: idToken, client_id: channelId }),
   })
 
   const verified: LineVerifyResponse = await verifyRes.json()
@@ -50,8 +51,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid token', detail: verified.error_description }, { status: 401 })
   }
 
-  if (verified.aud !== process.env.LINE_LOGIN_CHANNEL_ID) {
-    console.error('[LINE auth] audience mismatch — aud:', verified.aud, 'expected:', process.env.LINE_LOGIN_CHANNEL_ID)
+  if (verified.aud !== channelId) {
+    console.error('[LINE auth] audience mismatch — aud:', verified.aud, 'expected:', channelId)
     return NextResponse.json({ error: 'Token audience mismatch' }, { status: 401 })
   }
 
