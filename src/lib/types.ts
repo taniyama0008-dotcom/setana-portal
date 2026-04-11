@@ -25,6 +25,28 @@ export interface Spot {
   updated_at: string
 }
 
+export type ReviewStatus = 'public' | 'hidden'
+
+export interface Review {
+  id: string
+  spot_id: string
+  user_id: string | null
+  nickname: string
+  rating: number
+  text: string | null
+  visit_date: string | null
+  status: ReviewStatus
+  helpful_count: number
+  created_at: string
+}
+
+export interface ReviewImage {
+  id: string
+  review_id: string
+  image_url: string
+  alt_text: string | null
+}
+
 export interface Article {
   id: string
   title: string

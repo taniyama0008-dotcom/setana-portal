@@ -4,6 +4,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import type { Spot } from '@/lib/types'
+import ReviewSection from '@/components/reviews/ReviewSection'
 
 // セクション設定
 const sectionConfig = {
@@ -223,6 +224,14 @@ export default async function SpotPage({
             </div>
           </section>
         )}
+
+        {/* 口コミ */}
+        <ReviewSection
+          spotId={spot.id}
+          slug={spot.slug}
+          spotName={spot.name}
+          spotType={spot.section === 'shoku' ? 'Restaurant' : 'TouristAttraction'}
+        />
 
         {/* セクションへ戻る */}
         <div className="py-12">
