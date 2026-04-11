@@ -3,6 +3,7 @@ import { Noto_Sans_JP, Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import { LiffProvider } from '@/context/LiffContext'
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ['latin'],
@@ -46,9 +47,11 @@ export default function RootLayout({
       }}
     >
       <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <LiffProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </LiffProvider>
       </body>
     </html>
   )

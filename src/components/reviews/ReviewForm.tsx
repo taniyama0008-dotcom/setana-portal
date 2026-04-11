@@ -1,7 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { useActionState, useState } from 'react'
 import { submitReview } from '@/app/actions/review'
+import { useLiff } from '@/context/LiffContext'
 
 interface ReviewFormProps {
   spotId: string
@@ -46,17 +48,18 @@ function StarPicker({
 export default function ReviewForm({ spotId, slug }: ReviewFormProps) {
   const [state, formAction, isPending] = useActionState(submitReview, null)
   const [rating, setRating] = useState(0)
+  const { isLoggedIn, profile } = useLiff()
 
   if (state?.success) {
     return (
       <div className="py-8 px-6 bg-[#faf8f5] rounded-[8px] text-center">
         <p className="text-[22px] mb-2">ありがとうございます</p>
-        <p className="text-[14px] text-[#5c5c5c]">
-          口コミを投稿しました。
-        </p>
+        <p className="text-[14px] text-[#5c5c5c]">口コミを投稿しました。</p>
       </div>
     )
   }
+
+  const lineNickname = profile?.displayName ?? ''
 
   return (
     <form action={formAction} className="space-y-6">
@@ -84,20 +87,44 @@ export default function ReviewForm({ spotId, slug }: ReviewFormProps) {
         )}
       </div>
 
-      {/* ニックネーム */}
+      {/* ニックネーム — LINEログイン済みなら固定表示 */}
       <div>
-        <label htmlFor="review-nickname" className="block text-[13px] font-medium text-[#5c5c5c] mb-2">
-          ニックネーム <span className="text-[#d94f4f]">*</span>
+        <label className="block text-[13px] font-medium text-[#5c5c5c] mb-2">
+          投稿者 <span className="text-[#d94f4f]">*</span>
         </label>
-        <input
-          id="review-nickname"
-          name="nickname"
-          type="text"
-          required
-          maxLength={30}
-          placeholder="例: 旅好きの田中"
-          className="w-full max-w-xs bg-white border border-[#e0e0e0] rounded-[6px] px-4 py-3 text-[15px] text-[#1a1a1a] focus:outline-none focus:border-[#5b7e95] transition-colors min-h-[48px]"
-        />
+
+        {isLoggedIn && profile ? (
+          <div className="flex items-center gap-3 py-2">
+            {profile.pictureUrl ? (
+              <Image
+                src={profile.pictureUrl}
+                alt={profile.displayName}
+                width={36}
+                height={36}
+                className="rounded-full"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[14px] font-medium" style={{ backgroundColor: '#06C755' }}>
+                {profile.displayName.slice(0, 1)}
+              </div>
+            )}
+            <div>
+              <p className="text-[14px] font-medium text-[#1a1a1a]">{profile.displayName}</p>
+              <p className="text-[11px] text-[#8a8a8a]">LINEアカウントで投稿</p>
+            </div>
+            <input type="hidden" name="nickname" value={lineNickname} />
+          </div>
+        ) : (
+          <input
+            id="review-nickname"
+            name="nickname"
+            type="text"
+            required
+            maxLength={30}
+            placeholder="例: 旅好きの田中"
+            className="w-full max-w-xs bg-white border border-[#e0e0e0] rounded-[6px] px-4 py-3 text-[15px] text-[#1a1a1a] focus:outline-none focus:border-[#5b7e95] transition-colors min-h-[48px]"
+          />
+        )}
       </div>
 
       {/* 口コミ本文 */}
