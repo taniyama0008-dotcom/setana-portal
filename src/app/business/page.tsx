@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getSessionUserId } from '@/lib/session'
 import SectionBadge from '@/components/admin/SectionBadge'
@@ -19,7 +20,7 @@ export default async function BusinessDashboard() {
   // 自分の店舗を取得
   const { data: bizSpots } = await supabaseAdmin
     .from('business_spots')
-    .select('spot_id, spots(id, name, slug, section, area, status)')
+    .select('spot_id, spots(id, name, slug, section, area, status, cover_image, address)')
     .eq('user_id', uid!)
 
   const spots = (bizSpots ?? []).map((bs: any) => bs.spots).filter(Boolean)
@@ -61,6 +62,20 @@ export default async function BusinessDashboard() {
 
             return (
               <div key={spot.id} className="bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
+                {/* カバー画像 */}
+                {spot.cover_image && (
+                  <div className="relative h-[160px] w-full overflow-hidden">
+                    <Image
+                      src={spot.cover_image}
+                      alt={spot.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  </div>
+                )}
+
                 {/* スポットヘッダー */}
                 <div className="px-6 py-5 border-b border-[#efefef] flex items-start justify-between gap-4">
                   <div>
@@ -68,7 +83,10 @@ export default async function BusinessDashboard() {
                       <SectionBadge section={spot.section} />
                       <span className="text-[12px] text-[#8a8a8a]">{spot.area}</span>
                     </div>
-                    <h2 className="text-[16px] font-semibold text-[#1a1a1a]">{spot.name}</h2>
+                    <h2 className="text-[18px] font-bold text-[#1a1a1a]">{spot.name}</h2>
+                    {spot.address && (
+                      <p className="text-[12px] text-[#8a8a8a] mt-1">📍 {spot.address}</p>
+                    )}
                   </div>
                   <Link
                     href={`/business/spot/${spot.id}`}

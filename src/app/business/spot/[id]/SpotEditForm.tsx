@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
+import Image from 'next/image'
 import { updateSpotInfo } from '@/app/actions/business'
 
 interface SpotEditFormProps {
@@ -12,6 +13,7 @@ interface SpotEditFormProps {
     phone: string | null
     business_hours: string | null
     holidays: string | null
+    cover_image: string | null
   }
 }
 
@@ -37,9 +39,36 @@ export default function SpotEditForm({ spot }: SpotEditFormProps) {
         </p>
       )}
 
+      {/* 店舗名: 表示のみ */}
       <div>
-        <label className={labelClass}>店舗名 <span className="text-[#d94f4f]">*</span></label>
-        <input name="name" defaultValue={spot.name} required className={inputClass} />
+        <label className={labelClass}>店舗名</label>
+        <div className="w-full bg-[#f5f5f5] border border-[#e0e0e0] rounded-md px-4 py-3 text-[15px] text-[#1a1a1a]">
+          {spot.name}
+        </div>
+        <p className="text-[11px] text-[#8a8a8a] mt-1">店舗名の変更は管理者にお問い合わせください。</p>
+      </div>
+
+      {/* カバー画像 */}
+      <div>
+        <label className={labelClass}>カバー画像 URL</label>
+        {spot.cover_image && (
+          <div className="mb-3 relative h-[120px] w-full max-w-[320px] rounded-md overflow-hidden border border-[#e0e0e0]">
+            <Image
+              src={spot.cover_image}
+              alt={spot.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+        )}
+        <input
+          name="cover_image"
+          defaultValue={spot.cover_image ?? ''}
+          className={inputClass}
+          placeholder="https://... （画像の URL を貼り付け）"
+          type="url"
+        />
       </div>
 
       <div>

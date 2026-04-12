@@ -28,15 +28,15 @@ export async function updateSpotInfo(_prev: unknown, formData: FormData) {
   await assertSpotOwner(spotId)
 
   const payload = {
-    name: formData.get('name') as string,
     description: (formData.get('description') as string) || null,
     address: (formData.get('address') as string) || null,
     phone: (formData.get('phone') as string) || null,
     business_hours: (formData.get('business_hours') as string) || null,
     holidays: (formData.get('holidays') as string) || null,
+    cover_image: (formData.get('cover_image') as string) || null,
   }
 
-  if (!payload.name) return { error: '店舗名を入力してください。' }
+  if (!spotId) return { error: 'スポットIDが不正です。' }
 
   const { error } = await supabaseAdmin
     .from('spots')

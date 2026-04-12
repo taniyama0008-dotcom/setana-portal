@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import UserActions from './UserActions'
+import BusinessSetupModal from './BusinessSetupModal'
 
 function RoleBadge({ role }: { role: string }) {
   const c =
@@ -20,26 +20,30 @@ function formatDate(d: string) {
 }
 
 export default async function AdminUsersPage() {
-  const { data: users } = await supabaseAdmin
-    .from('users')
-    .select('id, nickname, line_display_name, line_picture_url, role, created_at')
-    .order('created_at', { ascending: false })
-
-  // 各ユーザーの口コミ数を取得
-  const { data: reviewCounts } = await supabaseAdmin
-    .from('reviews')
-    .select('user_id')
-    .in('status', ['published', 'hidden'])
+  const [{ data: users }, { data: reviewCounts }, { data: bizSpots }, { data: allSpots }] =
+    await Promise.all([
+      supabaseAdmin
+        .from('users')
+        .select('id, nickname, line_display_name, line_picture_url, role, created_at')
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('reviews')
+        .select('user_id')
+        .in('status', ['published', 'hidden']),
+      supabaseAdmin
+        .from('business_spots')
+        .select('user_id, spots(id, name)'),
+      supabaseAdmin
+        .from('spots')
+        .select('id, name, area')
+        .eq('status', 'public')
+        .order('name'),
+    ])
 
   const countMap: Record<string, number> = {}
   ;(reviewCounts ?? []).forEach((r: any) => {
     if (r.user_id) countMap[r.user_id] = (countMap[r.user_id] ?? 0) + 1
   })
-
-  // 事業者のスポット紐づけ
-  const { data: bizSpots } = await supabaseAdmin
-    .from('business_spots')
-    .select('user_id, spots(id, name)')
 
   const bizSpotMap: Record<string, any[]> = {}
   ;(bizSpots ?? []).forEach((bs: any) => {
@@ -47,20 +51,23 @@ export default async function AdminUsersPage() {
     if (bs.spots) bizSpotMap[bs.user_id].push(bs.spots)
   })
 
+  const spots = (allSpots ?? []) as { id: string; name: string; area: string }[]
+
   return (
-    <div className="p-8 max-w-[1100px]">
+    <div className="p-4 md:p-8 max-w-[1100px]">
       <div className="mb-8 pb-6 border-b border-[#e0e0e0]">
         <h1 className="text-[24px] font-bold text-[#1a1a1a] tracking-[0.02em]">ユーザー管理</h1>
         <p className="text-[13px] text-[#8a8a8a] mt-1">{users?.length ?? 0}件</p>
       </div>
 
-      <div className="bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
+      {/* テーブル: md以上 */}
+      <div className="hidden md:block bg-white border border-[#e0e0e0] rounded-md overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#efefef]">
               <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">ユーザー</th>
               <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">ロール</th>
-              <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">口コミ数</th>
+              <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">口コミ</th>
               <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">店舗</th>
               <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">登録日</th>
               <th className="px-4 py-3 text-left text-[11px] text-[#8a8a8a] tracking-[0.08em] uppercase font-medium">操作</th>
@@ -99,12 +106,57 @@ export default async function AdminUsersPage() {
                 </td>
                 <td className="px-4 py-3 text-[12px] text-[#8a8a8a] tabular-nums">{formatDate(u.created_at)}</td>
                 <td className="px-4 py-3">
-                  <UserActions userId={u.id} currentRole={u.role} />
+                  <BusinessSetupModal
+                    userId={u.id}
+                    userName={u.line_display_name ?? u.nickname ?? '—'}
+                    currentRole={u.role}
+                    currentSpotIds={(bizSpotMap[u.id] ?? []).map((s: any) => s.id)}
+                    allSpots={spots}
+                  />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* カード: md未満 */}
+      <div className="md:hidden space-y-3">
+        {(users ?? []).map((u: any) => (
+          <div key={u.id} className="bg-white border border-[#e0e0e0] rounded-[10px] p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-[#e0e0e0] flex items-center justify-center text-[13px] font-medium text-[#5c5c5c] shrink-0">
+                  {(u.line_display_name ?? u.nickname ?? '?').slice(0, 1)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-medium text-[#1a1a1a] truncate">
+                    {u.line_display_name ?? u.nickname ?? '—'}
+                  </p>
+                  <p className="text-[11px] text-[#8a8a8a]">{formatDate(u.created_at)}</p>
+                </div>
+              </div>
+              <RoleBadge role={u.role} />
+            </div>
+
+            <div className="flex flex-wrap gap-x-5 gap-y-1 mb-3 text-[12px] text-[#5c5c5c]">
+              <span>口コミ <strong className="text-[#1a1a1a]">{countMap[u.id] ?? 0}</strong></span>
+              {(bizSpotMap[u.id] ?? []).length > 0 && (
+                <span className="truncate max-w-[200px]">
+                  店舗: {bizSpotMap[u.id].map((s: any) => s.name).join('、')}
+                </span>
+              )}
+            </div>
+
+            <BusinessSetupModal
+              userId={u.id}
+              userName={u.line_display_name ?? u.nickname ?? '—'}
+              currentRole={u.role}
+              currentSpotIds={(bizSpotMap[u.id] ?? []).map((s: any) => s.id)}
+              allSpots={spots}
+            />
+          </div>
+        ))}
       </div>
     </div>
   )
