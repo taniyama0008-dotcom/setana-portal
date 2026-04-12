@@ -317,17 +317,17 @@ const categoryLabels: Record<string, string> = {
 
 function buildConfirmFlex(ctx: SessionContext) {
   const catLabel  = categoryLabels[ctx.category ?? 'other'] ?? ctx.category
-  const typeLabel = ctx.report_type === 'infrastructure' ? 'インフラ通報' : 'リアルタイム情報'
+  const typeLabel = ctx.report_type === 'infrastructure' ? 'こまった 🚧' : 'お店のいま 🏪'
   const place     = ctx.spot_name ?? (ctx.latitude ? `${ctx.latitude.toFixed(4)}, ${ctx.longitude?.toFixed(4)}` : '（場所なし）')
 
   return {
     type: 'flex',
-    altText: '通報内容の確認',
+    altText: 'おしえてくれた内容の確認',
     contents: {
       type: 'bubble',
       header: {
         type: 'box', layout: 'vertical', backgroundColor: '#5b7e95',
-        contents: [{ type: 'text', text: '📋 通報内容の確認', color: '#ffffff', weight: 'bold', size: 'md' }],
+        contents: [{ type: 'text', text: '📋 おしえてくれた内容', color: '#ffffff', weight: 'bold', size: 'md' }],
       },
       body: {
         type: 'box', layout: 'vertical', spacing: 'sm',
@@ -386,7 +386,7 @@ async function handleEvent(event: Record<string, unknown>) {
   if (event.type === 'follow') {
     await clearSession(lineUserId)
     await reply(replyToken, [
-      { type: 'text', text: 'せたなポータルへようこそ！\n道路の不具合・お店の臨時休業など、地域の情報をLINEで簡単に送れます。\n\n「通報」または「報告」と送ってみてください。' },
+      { type: 'text', text: 'せたなポータルへようこそ！🌊\n道路の不具合・お店の臨時休業など、地域の"いま"をみんなでシェアしよう。\n\n「おしえる」と送ってみてください 😊' },
     ])
     return
   }
@@ -415,7 +415,7 @@ async function handleEvent(event: Record<string, unknown>) {
 
 // ─── リセットキーワード判定 ─────────────────────────────────
 
-const RESET_PATTERN = /通報|報告|つうほう|ほうこく|リセット|やり直|最初から|はじめから/
+const RESET_PATTERN = /おしえる|教える|おしえて|通報|報告|つうほう|ほうこく|リセット|やり直|最初から|はじめから/
 
 async function resetAndStart(lineUserId: string, replyToken: string) {
   console.log('[LINE Bot] RESET triggered — clearing session and starting report flow')
@@ -427,8 +427,8 @@ async function resetWithGuide(lineUserId: string, replyToken: string, reason: st
   console.log('[LINE Bot] unexpected input (', reason, ') — resetting session to idle')
   await clearSession(lineUserId)
   await reply(replyToken, [
-    qrText('入力をリセットしました。「通報」と送ってやり直してください。',
-      [pb('通報・情報を送る', 'report_start', '通報')]),
+    qrText('リセットしました。「おしえる」と送ってね 😊',
+      [pb('おしえる 📢', 'report_start', 'おしえる')]),
   ])
 }
 
@@ -454,8 +454,8 @@ async function handleText(
     } else {
       console.log('[LINE Bot] idle: unrecognized text, sending prompt')
       await reply(replyToken, [
-        qrText('「通報」または「報告」と送ると情報を受け付けます。',
-          [pb('通報・情報を送る', 'report_start', '通報')]),
+        qrText('「おしえる」と送ると始められるよ 😊',
+          [pb('おしえる 📢', 'report_start', 'おしえる')]),
       ])
     }
     return
@@ -472,8 +472,8 @@ async function handleText(
     const newCtx = { ...context, description: t }
     await setSession(lineUserId, 'photo_optional', newCtx)
     await reply(replyToken, [
-      qrText('写真があれば送ってください。なければ「なし」と入力してください。',
-        [pb('なし', 'skip_photo', 'なし（写真なし）')]),
+      qrText('写真があれば送ってね。なければ「なし」で OK 👌',
+        [pb('なし（写真なし）', 'skip_photo', 'なし（写真なし）')]),
     ])
     return
   }
@@ -483,15 +483,15 @@ async function handleText(
       console.log('[LINE Bot] transitioning to: location_request (photo skipped via text)')
       await setSession(lineUserId, 'location_request', context)
       await reply(replyToken, [
-        qrText('現在地を送ってください。位置情報ボタンを押すか、「なし」と入力してください。',
+        qrText('場所を送ってね。わからなければ「なし」で OK 📍',
           [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
       ])
     } else {
       // photo_request で想定外テキスト → 再案内（リセットはしない）
       console.log('[LINE Bot] photo_request: non-skip text received, re-prompting')
       await reply(replyToken, [
-        qrText('写真を送ってください。スキップする場合は下のボタンを押してください。',
-          [pb('スキップ', 'skip_photo', 'スキップ（写真なし）')]),
+        qrText('写真があれば送ってね。なければ「なし」で OK 👌',
+          [pb('なし（写真なし）', 'skip_photo', 'なし（写真なし）')]),
       ])
     }
     return
@@ -507,7 +507,7 @@ async function handleText(
       // photo_optional で想定外テキスト → 再案内（リセットはしない）
       console.log('[LINE Bot] photo_optional: non-skip text received, re-prompting')
       await reply(replyToken, [
-        qrText('写真を送るか、スキップしてください。',
+        qrText('写真があれば送ってね。なければ「なし」で OK 👌',
           [pb('なし（写真なし）', 'skip_photo', 'なし（写真なし）')]),
       ])
     }
@@ -523,7 +523,7 @@ async function handleText(
       // location_request で想定外テキスト → 再案内（リセットはしない）
       console.log('[LINE Bot] location_request: non-skip text received, re-prompting')
       await reply(replyToken, [
-        qrText('位置情報ボタンで場所を送るか、スキップしてください。',
+        qrText('場所を送ってね。わからなければ「なし」で OK 📍',
           [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
       ])
     }
@@ -561,13 +561,13 @@ async function handlePostback(
     await clearSession(lineUserId)
     console.log('[LINE Bot] transitioning to: idle (after submit)')
     const typeLabel = context.report_type === 'infrastructure'
-      ? '通報を受け付けました。担当部署に転送済みです。'
-      : '情報をありがとうございます！確認後に公開されます。'
+      ? '情報ありがとうございます！担当部署におしらせしました 🙏'
+      : 'ありがとう！確認できたら「今のせたな」に載せますね 📢'
     const { data: user } = await supabaseAdmin.from('users').select('coin_balance').eq('line_user_id', lineUserId).maybeSingle()
-    const balanceText = user ? `現在の残高: ${user.coin_balance ?? 0}コイン` : ''
+    const balanceText = user ? `いまの残高: ${user.coin_balance ?? 0}コイン` : ''
     await reply(replyToken, [{
       type: 'text',
-      text: `✅ ${typeLabel}\n受付番号: ${reportNumber}\n${coins}コインを付与しました！\n${balanceText}`,
+      text: `✅ ${typeLabel}\n受付番号: ${reportNumber}\n${coins}コイン ゲット！💰\n${balanceText}`,
     }])
     return
   }
@@ -575,7 +575,7 @@ async function handlePostback(
   if (data === 'confirm_cancel') {
     console.log('[LINE Bot] transitioning to: idle (confirm cancelled)')
     await clearSession(lineUserId)
-    await reply(replyToken, [{ type: 'text', text: 'キャンセルしました。また「通報」と送ってください。' }])
+    await reply(replyToken, [{ type: 'text', text: 'キャンセルしました。また「おしえる」と送ってね 😊' }])
     return
   }
 
@@ -584,7 +584,7 @@ async function handlePostback(
       console.log('[LINE Bot] transitioning to: location_request (photo skipped via postback)')
       await setSession(lineUserId, 'location_request', context)
       await reply(replyToken, [
-        qrText('現在地を送ってください。',
+        qrText('場所を送ってね。わからなければ「なし」で OK 📍',
           [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
       ])
     } else {
@@ -609,22 +609,22 @@ async function handlePostback(
       console.log('[LINE Bot] transitioning to: infra_category')
       await setSession(lineUserId, 'infra_category', { report_type: 'infrastructure' })
       await reply(replyToken, [
-        qrText('どんな問題ですか？',
+        qrText('どんなことで困っていますか？',
           [pb('道路（陥没・落石）', 'cat_road'), pb('街灯の故障', 'cat_streetlight'),
            pb('公園・遊具', 'cat_park'), pb('除雪', 'cat_snow'), pb('その他', 'cat_other')]),
       ])
     } else if (data === 'type_shop') {
       console.log('[LINE Bot] transitioning to: shop_select')
       await setSession(lineUserId, 'shop_select', { report_type: 'realtime_info' })
-      await reply(replyToken, [{ type: 'text', text: 'お店の名前を教えてください。' }])
+      await reply(replyToken, [{ type: 'text', text: 'どのお店ですか？（名前を入力してね）' }])
     } else if (data === 'type_weather') {
       console.log('[LINE Bot] transitioning to: weather_input')
       await setSession(lineUserId, 'weather_input', { report_type: 'realtime_info', category: 'weather' })
-      await reply(replyToken, [{ type: 'text', text: '道路・天候の状況を教えてください。' }])
+      await reply(replyToken, [{ type: 'text', text: '道路・天候の状況をおしえてください 🌤️' }])
     } else if (data === 'type_other') {
       console.log('[LINE Bot] transitioning to: other_input')
       await setSession(lineUserId, 'other_input', { report_type: 'realtime_info', category: 'other_info' })
-      await reply(replyToken, [{ type: 'text', text: '情報の内容を教えてください。' }])
+      await reply(replyToken, [{ type: 'text', text: 'どんな情報ですか？おしえてください 📝' }])
     } else {
       console.log('[LINE Bot] select_type: unrecognized data:', data)
     }
@@ -643,8 +643,8 @@ async function handlePostback(
       const newCtx = { ...context, category }
       await setSession(lineUserId, 'photo_request', newCtx)
       await reply(replyToken, [
-        qrText('写真を送ってください（任意）。',
-          [pb('スキップ', 'skip_photo', 'スキップ（写真なし）')]),
+        qrText('写真があれば送ってね。なければ「なし」で OK 👌',
+          [pb('なし（写真なし）', 'skip_photo', 'なし（写真なし）')]),
       ])
     } else {
       console.log('[LINE Bot] infra_category: unknown data, no catMap match for:', data)
@@ -655,18 +655,37 @@ async function handlePostback(
   // ─ shop_status ─
   if (state === 'shop_status') {
     console.log('[LINE Bot] shop_status: received data:', data)
-    const catMap: Record<string, string> = {
-      shop_closed: 'shop_closed', shop_hours: 'shop_hours',
-      shop_crowded: 'shop_crowded', shop_other: 'other_info',
-    }
-    const category = catMap[data]
-    if (category) {
-      console.log('[LINE Bot] transitioning to: description_request | category:', category)
-      const newCtx = { ...context, category }
+
+    if (data === 'shop_closed') {
+      // 臨時休業: description 自動セット → 確認画面へ直行
+      const newCtx = { ...context, category: 'shop_closed', description: '臨時休業', photo_url: null }
+      console.log('[LINE Bot] transitioning to: confirm (shop_closed, auto description)')
+      await setSession(lineUserId, 'confirm', newCtx)
+      await reply(replyToken, [buildConfirmFlex(newCtx)])
+
+    } else if (data === 'shop_crowded') {
+      // 混雑: description 自動セット → 確認画面へ直行
+      const newCtx = { ...context, category: 'shop_crowded', description: '混雑中', photo_url: null }
+      console.log('[LINE Bot] transitioning to: confirm (shop_crowded, auto description)')
+      await setSession(lineUserId, 'confirm', newCtx)
+      await reply(replyToken, [buildConfirmFlex(newCtx)])
+
+    } else if (data === 'shop_hours') {
+      // 営業時間変更: 変更後の時間を聞く → confirm
+      const newCtx = { ...context, category: 'shop_hours' }
+      console.log('[LINE Bot] transitioning to: description_request (shop_hours)')
       await setSession(lineUserId, 'description_request', newCtx)
-      await reply(replyToken, [{ type: 'text', text: '詳しい状況を教えてください。' }])
+      await reply(replyToken, [{ type: 'text', text: '変更後の営業時間をおしえてください。（例: 10:00〜17:00）' }])
+
+    } else if (data === 'shop_other') {
+      // その他: 詳細を聞く → description_request → photo_optional → confirm
+      const newCtx = { ...context, category: 'other_info' }
+      console.log('[LINE Bot] transitioning to: description_request (shop_other)')
+      await setSession(lineUserId, 'description_request', newCtx)
+      await reply(replyToken, [{ type: 'text', text: 'どんな状況ですか？' }])
+
     } else {
-      console.log('[LINE Bot] shop_status: unknown data, no catMap match for:', data)
+      console.log('[LINE Bot] shop_status: unknown data:', data)
     }
     return
   }
@@ -726,8 +745,8 @@ async function handleImage(
     }
   } else if (state === 'idle') {
     await reply(replyToken, [
-      qrText('写真を受け取りました。通報として送りますか？',
-        [pb('通報・情報を送る', 'report_start', '通報する')]),
+      qrText('写真を受け取りました 📷 おしえることがあれば送ってね！',
+        [pb('おしえる 📢', 'report_start', 'おしえる')]),
     ])
   } else {
     // 想定外の state で画像 → リセットして案内
@@ -783,7 +802,7 @@ async function handleShopSearch(
     const newCtx = { ...context, spot_name: shopName }
     await setSession(lineUserId, 'shop_status', newCtx)
     await reply(replyToken, [
-      qrText('どんな情報ですか？',
+      qrText('どんな情報ですか？🏪',
         [pb('臨時休業', 'shop_closed'), pb('営業時間変更', 'shop_hours'),
          pb('混雑している', 'shop_crowded'), pb('その他', 'shop_other')]),
     ])
@@ -795,9 +814,9 @@ async function handleShopSearch(
 async function handleStartReport(lineUserId: string, replyToken: string) {
   await setSession(lineUserId, 'select_type', {})
   await reply(replyToken, [
-    qrText('どんな情報ですか？',
-      [pb('インフラ通報', 'type_infra'), pb('お店の情報', 'type_shop'),
-       pb('道路・天候', 'type_weather'), pb('その他の情報', 'type_other')]),
+    qrText('せたなの"いま"をおしえてください 🙌',
+      [pb('こまった 🚧', 'type_infra'), pb('お店のいま 🏪', 'type_shop'),
+       pb('道路・天候 🌤️', 'type_weather'), pb('その他', 'type_other')]),
   ])
 }
 

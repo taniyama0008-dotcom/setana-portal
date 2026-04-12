@@ -366,7 +366,10 @@ export default async function Home() {
                     <span className="text-[20px] shrink-0">{icons[r.category] ?? '📌'}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded nav-label bg-[#e8f0f4] text-[#3d5a6e]">{catLabels[r.category]}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded nav-label ${r.report_type === 'infrastructure' ? 'bg-[#fef0e8] text-[#c47e4f]' : 'bg-[#e8f0f4] text-[#3d5a6e]'}`}>
+                          {r.report_type === 'infrastructure' ? 'こまった' : 'お店のいま'}
+                        </span>
+                        <span className="text-[10px] text-[#8a8a8a]">{catLabels[r.category]}</span>
                         <span className="text-[11px] text-[#c0c0c0]">{timeStr}</span>
                       </div>
                       <p className="text-[13px] text-[#1a1a1a] line-clamp-1 leading-snug">

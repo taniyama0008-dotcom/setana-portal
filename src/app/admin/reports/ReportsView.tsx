@@ -83,7 +83,7 @@ function ReportModal({ report, onClose, onUpdate }: {
             <p className="text-[11px] font-medium text-[#8a8a8a] tracking-[0.1em] mb-3">基本情報</p>
             <dl className="space-y-2 text-[13px]">
               <div className="flex gap-3"><dt className="text-[#8a8a8a] w-20 shrink-0">種別</dt>
-                <dd>{report.report_type === 'infrastructure' ? '🔴 インフラ通報' : '🔵 リアルタイム情報'}</dd>
+                <dd>{report.report_type === 'infrastructure' ? '🔴 こまった' : '🔵 お店のいま'}</dd>
               </div>
               <div className="flex gap-3"><dt className="text-[#8a8a8a] w-20 shrink-0">報告者</dt>
                 <dd>{report.reporter_name ?? '匿名'}</dd>
@@ -264,9 +264,9 @@ function ReportModal({ report, onClose, onUpdate }: {
 // ─── メインビュー ────────────────────────────────────────────
 
 const TABS = [
-  { value: 'all',           label: 'すべて' },
-  { value: 'infrastructure', label: 'インフラ通報' },
-  { value: 'realtime_info', label: 'リアルタイム情報' },
+  { value: 'all',            label: 'すべて' },
+  { value: 'infrastructure', label: 'こまった' },
+  { value: 'realtime_info',  label: 'お店のいま' },
 ]
 
 export default function ReportsView({
@@ -296,7 +296,7 @@ export default function ReportsView({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[20px] font-bold text-[#1a1a1a]">通報・情報管理</h1>
+        <h1 className="text-[20px] font-bold text-[#1a1a1a]">みんなの情報</h1>
         <p className="text-[13px] text-[#8a8a8a]">{reports.length}件</p>
       </div>
 
@@ -336,7 +336,7 @@ export default function ReportsView({
 
       {reports.length === 0 ? (
         <div className="bg-white rounded-[8px] border border-[#efefef] p-12 text-center">
-          <p className="text-[#8a8a8a] text-[14px]">通報・情報がありません。</p>
+          <p className="text-[#8a8a8a] text-[14px]">みんなの情報はまだありません。</p>
         </div>
       ) : (
         <div className="bg-white rounded-[8px] border border-[#efefef] overflow-hidden">
