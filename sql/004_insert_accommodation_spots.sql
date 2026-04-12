@@ -4,7 +4,7 @@
 
 INSERT INTO spots (
   slug, name, description, category, section,
-  area, address, phone, website,
+  area, address, phone,
   latitude, longitude,
   has_onsen, has_meals, price_range, room_count,
   status
@@ -17,7 +17,6 @@ INSERT INTO spots (
   'shizen',
   'setana',
   '北海道久遠郡せたな町瀬棚区',
-  NULL,
   NULL,
   42.45, 139.85,
   TRUE, TRUE, '8,000〜15,000円/泊',
@@ -33,7 +32,6 @@ INSERT INTO spots (
   'kitahiyama',
   '北海道久遠郡せたな町北檜山区',
   NULL,
-  NULL,
   42.50, 139.90,
   FALSE, TRUE, '6,000〜9,000円/泊',
   8,
@@ -47,7 +45,6 @@ INSERT INTO spots (
   'shizen',
   'taisei',
   '北海道久遠郡せたな町大成区',
-  NULL,
   NULL,
   42.40, 139.78,
   FALSE, FALSE, '2,000〜4,000円/サイト',
