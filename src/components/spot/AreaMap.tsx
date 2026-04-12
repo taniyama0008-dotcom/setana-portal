@@ -9,17 +9,6 @@ interface AreaMapProps {
 
 const areas = [
   {
-    key: 'kitahiyama' as Area,
-    label: '北檜山区',
-    sub: '行政の中心地',
-    fill: '#ccdec6',
-    stroke: '#7d8f6b',
-    text: '#3d5c2d',
-    spots: ['玉川公園', '道の駅せたな', '飲食店街'],
-    // SVG rect position
-    x: 80, y: 40, w: 200, h: 80,
-  },
-  {
     key: 'setana' as Area,
     label: '瀬棚区',
     sub: '漁港・観光の中心',
@@ -27,6 +16,16 @@ const areas = [
     stroke: '#6b8fa3',
     text: '#2d4a5c',
     spots: ['三本杉岩', '瀬棚漁港', '日本海'],
+    x: 80, y: 40, w: 200, h: 80,
+  },
+  {
+    key: 'kitahiyama' as Area,
+    label: '北檜山区',
+    sub: '行政の中心地',
+    fill: '#ccdec6',
+    stroke: '#7d8f6b',
+    text: '#3d5c2d',
+    spots: ['玉川公園', '道の駅せたな', '飲食店街'],
     x: 60, y: 170, w: 200, h: 80,
   },
   {
@@ -73,17 +72,17 @@ export default function AreaMap({ onAreaClick }: AreaMapProps) {
             <line x1="295" y1="60" x2="295" y2="380" stroke="#6b8fa3" strokeWidth="1" strokeDasharray="4 3" opacity="0.3" />
 
             {/* 矢印ライン */}
-            {/* 北檜山 ↔ 瀬棚 */}
+            {/* 瀬棚 ↔ 北檜山 */}
             <line x1="180" y1="122" x2="162" y2="168" stroke="#b0b0b0" strokeWidth="1.5" markerEnd="url(#arrow)" />
             <text x="155" y="148" fontSize="9" fill="#8a8a8a" textAnchor="end">約20分</text>
 
-            {/* 瀬棚 ↔ 大成 */}
+            {/* 北檜山 ↔ 大成 */}
             <line x1="162" y1="252" x2="198" y2="298" stroke="#b0b0b0" strokeWidth="1.5" markerEnd="url(#arrow)" />
-            <text x="152" y="278" fontSize="9" fill="#8a8a8a" textAnchor="end">約60分</text>
+            <text x="152" y="278" fontSize="9" fill="#8a8a8a" textAnchor="end">約40分</text>
 
-            {/* 北檜山 ↔ 大成 (dashed, 右側) */}
+            {/* 瀬棚 ↔ 大成 (dashed, 右側) */}
             <line x1="262" y1="122" x2="282" y2="298" stroke="#b0b0b0" strokeWidth="1" strokeDasharray="4 3" />
-            <text x="290" y="215" fontSize="9" fill="#8a8a8a" textAnchor="start">約40分</text>
+            <text x="290" y="215" fontSize="9" fill="#8a8a8a" textAnchor="start">約60分</text>
 
             {/* 矢印マーカー定義 */}
             <defs>

@@ -130,8 +130,7 @@ export default function AccessPage() {
 
           {/* エリア別説明 */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            {[
-              {
+            {[{
                 label: '瀬棚エリア',
                 accent: '#6b8fa3',
                 desc: '漁港と海岸線。三本杉岩、瀬棚物産などがある中心的な港町。',
