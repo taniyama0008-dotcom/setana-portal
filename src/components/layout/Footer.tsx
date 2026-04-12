@@ -68,11 +68,6 @@ export default function Footer() {
           <p className="text-[11px] text-white/25">
             © 2026 SETANA
           </p>
-          <div className="flex gap-5">
-            <Link href="/support" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
-              応援する
-            </Link>
-          </div>
         </div>
       </div>
     </footer>
