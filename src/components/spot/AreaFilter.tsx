@@ -1,17 +1,17 @@
 'use client'
 
-import type { Area } from '@/lib/types'
+import type { SpotArea } from '@/lib/types'
 
-const areas: { value: Area | 'all'; label: string }[] = [
-  { value: 'all',       label: 'すべて' },
-  { value: 'setana',     label: '瀬棚' },
-  { value: 'kitahiyama', label: '北檜山' },
-  { value: 'taisei',     label: '大成' },
+const areas: { value: SpotArea | 'all'; label: string }[] = [
+  { value: 'all',    label: 'すべて' },
+  { value: '瀬棚区',  label: '瀬棚' },
+  { value: '北檜山区', label: '北檜山' },
+  { value: '大成区',  label: '大成' },
 ]
 
 interface AreaFilterProps {
-  selected: Area | 'all'
-  onChange: (area: Area | 'all') => void
+  selected: SpotArea | 'all'
+  onChange: (area: SpotArea | 'all') => void
 }
 
 export default function AreaFilter({ selected, onChange }: AreaFilterProps) {

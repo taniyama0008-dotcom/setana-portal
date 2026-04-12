@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { Spot, Area } from '@/lib/types'
+import type { Spot, SpotArea } from '@/lib/types'
 import SpotCard from './SpotCard'
 import AreaFilter from './AreaFilter'
 
@@ -10,7 +10,7 @@ interface SpotListWithAreaFilterProps {
 }
 
 export default function SpotListWithAreaFilter({ spots }: SpotListWithAreaFilterProps) {
-  const [area, setArea] = useState<Area | 'all'>('all')
+  const [area, setArea] = useState<SpotArea | 'all'>('all')
 
   const filtered = area === 'all' ? spots : spots.filter((s) => s.area === area)
 

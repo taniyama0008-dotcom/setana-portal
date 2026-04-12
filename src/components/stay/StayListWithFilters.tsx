@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { Spot, Area } from '@/lib/types'
+import type { Spot, SpotArea } from '@/lib/types'
 import AreaFilter from '@/components/spot/AreaFilter'
 import { areaConfig } from '@/components/spot/AreaBadge'
 
@@ -114,7 +114,7 @@ interface Props {
 }
 
 export default function StayListWithFilters({ spots }: Props) {
-  const [area, setArea] = useState<Area | 'all'>('all')
+  const [area, setArea] = useState<SpotArea | 'all'>('all')
   const [stayType, setStayType] = useState<StayType>('all')
 
   const filtered = spots.filter((s) => {
