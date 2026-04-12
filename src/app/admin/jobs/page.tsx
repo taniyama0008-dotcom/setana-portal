@@ -18,7 +18,6 @@ export default async function AdminJobsPage() {
     .from('jobs')
     .select('*, spots(name), users(line_display_name, nickname)')
     .order('created_at', { ascending: false })
-    .catch(() => ({ data: [] }))
 
   const list = jobs ?? []
 

@@ -14,7 +14,7 @@ async function assertAdmin() {
   if (role !== 'admin') throw new Error('Forbidden')
 }
 
-export async function createJob(formData: FormData) {
+export async function createJob(_prev: unknown, formData: FormData) {
   await assertBusinessOrAdmin()
   const userId = await getSessionUserId()
 

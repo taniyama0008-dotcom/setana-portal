@@ -25,7 +25,6 @@ export default async function WorkPage() {
     .select('*, spots(name)')
     .eq('status', 'open')
     .order('created_at', { ascending: false })
-    .catch(() => ({ data: null }))
 
   const list = jobs ?? []
 
