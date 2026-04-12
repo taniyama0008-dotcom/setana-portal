@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getSessionUserId } from '@/lib/session'
 import type { Review } from '@/lib/types'
 import ReviewForm from './ReviewForm'
 
@@ -39,12 +41,25 @@ export default async function ReviewSection({
   spotName,
   spotType,
 }: ReviewSectionProps) {
-  const { data: reviews } = await supabase
-    .from('reviews')
-    .select('*')
-    .eq('spot_id', spotId)
-    .eq('status', 'public')
-    .order('created_at', { ascending: false })
+  const [{ data: reviews }, userId] = await Promise.all([
+    supabase
+      .from('reviews')
+      .select('*')
+      .eq('spot_id', spotId)
+      .eq('status', 'public')
+      .order('created_at', { ascending: false }),
+    getSessionUserId(),
+  ])
+
+  let dbNickname: string | undefined
+  if (userId) {
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('nickname')
+      .eq('id', userId)
+      .single()
+    dbNickname = user?.nickname ?? undefined
+  }
 
   const list = (reviews ?? []) as Review[]
   const count = list.length
@@ -139,7 +154,7 @@ export default async function ReviewSection({
           <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-6 tracking-[0.03em]">
             口コミを書く
           </h3>
-          <ReviewForm spotId={spotId} slug={slug} />
+          <ReviewForm spotId={spotId} slug={slug} dbNickname={dbNickname} />
         </div>
       </section>
     </>

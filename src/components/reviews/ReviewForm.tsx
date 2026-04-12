@@ -1,13 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import { useActionState, useState } from 'react'
 import { submitReview } from '@/app/actions/review'
-import { useLiff } from '@/context/LiffContext'
 
 interface ReviewFormProps {
   spotId: string
   slug: string
+  dbNickname?: string  // ログイン済みユーザーの表示名（サーバーから渡す）
 }
 
 const currentYear = new Date().getFullYear()
@@ -45,10 +44,9 @@ function StarPicker({
   )
 }
 
-export default function ReviewForm({ spotId, slug }: ReviewFormProps) {
+export default function ReviewForm({ spotId, slug, dbNickname }: ReviewFormProps) {
   const [state, formAction, isPending] = useActionState(submitReview, null)
   const [rating, setRating] = useState(0)
-  const { isLoggedIn, profile } = useLiff()
 
   if (state?.success) {
     return (
@@ -59,7 +57,7 @@ export default function ReviewForm({ spotId, slug }: ReviewFormProps) {
     )
   }
 
-  const lineNickname = profile?.displayName ?? ''
+  const isLoggedIn = dbNickname !== undefined
 
   return (
     <form action={formAction} className="space-y-6">
@@ -87,32 +85,24 @@ export default function ReviewForm({ spotId, slug }: ReviewFormProps) {
         )}
       </div>
 
-      {/* ニックネーム — LINEログイン済みなら固定表示 */}
+      {/* 投稿者表示名 */}
       <div>
         <label className="block text-[13px] font-medium text-[#5c5c5c] mb-2">
           投稿者 <span className="text-[#d94f4f]">*</span>
         </label>
 
-        {isLoggedIn && profile ? (
+        {isLoggedIn ? (
           <div className="flex items-center gap-3 py-2">
-            {profile.pictureUrl ? (
-              <Image
-                src={profile.pictureUrl}
-                alt={profile.displayName}
-                width={36}
-                height={36}
-                className="rounded-full"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[14px] font-medium" style={{ backgroundColor: '#06C755' }}>
-                {profile.displayName.slice(0, 1)}
-              </div>
-            )}
-            <div>
-              <p className="text-[14px] font-medium text-[#1a1a1a]">{profile.displayName}</p>
-              <p className="text-[11px] text-[#8a8a8a]">LINEアカウントで投稿</p>
+            <div className="w-9 h-9 rounded-full bg-[#e8f0f5] flex items-center justify-center text-[#5b7e95] text-[14px] font-medium shrink-0">
+              {dbNickname!.slice(0, 1)}
             </div>
-            <input type="hidden" name="nickname" value={lineNickname} />
+            <div>
+              <p className="text-[14px] font-medium text-[#1a1a1a]">{dbNickname}</p>
+              <p className="text-[11px] text-[#8a8a8a]">
+                マイページから変更できます
+              </p>
+            </div>
+            <input type="hidden" name="nickname" value={dbNickname} />
           </div>
         ) : (
           <input

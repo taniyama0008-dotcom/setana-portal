@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { supabase } from '@/lib/supabase'
+import { getSessionUserId } from '@/lib/session'
 
 export type ReviewState = {
   success?: boolean
@@ -40,8 +41,11 @@ export async function submitReview(
       ? `${visitYear}-${visitMonth.padStart(2, '0')}`
       : null
 
+  const userId = await getSessionUserId()
+
   const { error } = await supabase.from('reviews').insert({
     spot_id: spotId,
+    user_id: userId ?? null,
     nickname,
     rating,
     text: text || null,
