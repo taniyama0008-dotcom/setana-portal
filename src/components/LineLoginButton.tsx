@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useLiff } from '@/context/LiffContext'
 
 export default function LineLoginButton() {
@@ -30,8 +31,8 @@ export default function LineLoginButton() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* プロフィール表示 */}
-      <div className="flex items-center gap-2 px-2 py-1.5">
+      {/* プロフィール表示 → マイページへ */}
+      <Link href="/mypage" className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] hover:bg-[#f5f5f5] transition-colors">
         {profile?.pictureUrl ? (
           <Image
             src={profile.pictureUrl}
@@ -46,9 +47,9 @@ export default function LineLoginButton() {
           </div>
         )}
         <span className="text-[13px] text-[#1a1a1a] font-medium max-w-[80px] truncate hidden sm:block">
-          {profile?.displayName}
+          マイページ
         </span>
-      </div>
+      </Link>
 
       {/* ログアウト */}
       <button
