@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: 'SETANA',
   },
   verification: {
-    google: '5YB9ukelsVJK1B4YM_wafZIF_RX_76zHY61LNRzo6mU',
+    google: 'ki_QhaB4hebpgcUtGplPOKcMtdAJod_6MjcS87EItxw',
   },
 }
 
