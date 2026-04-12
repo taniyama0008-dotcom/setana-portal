@@ -26,8 +26,8 @@ const typeColors: Record<string, string> = {
   realtime_info:  'bg-[#e8f0f4] text-[#3d5a6e]',
 }
 const typeLabels: Record<string, string> = {
-  infrastructure: 'インフラ通報',
-  realtime_info:  'リアルタイム情報',
+  infrastructure: 'こまった',
+  realtime_info:  'お店のいま',
 }
 
 function formatRelative(d: string): string {
@@ -94,7 +94,7 @@ export default async function ReportsPage() {
         {reports.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-[#8a8a8a] text-[15px]">現在、公開されている情報はありません。</p>
-            <p className="text-[13px] text-[#8a8a8a] mt-2">LINEから「通報」と送って情報を共有してください。</p>
+            <p className="text-[13px] text-[#8a8a8a] mt-2">LINEで「おしえる」と送って情報をシェアしよう。</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -137,9 +137,9 @@ export default async function ReportsPage() {
 
         {/* LINE で送る */}
         <div className="mt-12 bg-[#faf8f5] rounded-[10px] border border-[#efefef] p-6 text-center">
-          <p className="text-[14px] font-medium text-[#1a1a1a] mb-2">あなたも情報を送る</p>
-          <p className="text-[13px] text-[#5c5c5c] mb-4">LINEで「通報」と送るだけ。道路・お店・天候情報を共有できます。</p>
-          <p className="text-[12px] text-[#8a8a8a]">通報するとせたなコインが貯まります。</p>
+          <p className="text-[14px] font-medium text-[#1a1a1a] mb-2">あなたもおしえる</p>
+          <p className="text-[13px] text-[#5c5c5c] mb-4">LINEで「おしえる」と送るだけ。道路・お店・天候情報を共有できます。</p>
+          <p className="text-[12px] text-[#8a8a8a]">おしえるとせたなコインがもらえるよ 🪙</p>
         </div>
       </div>
     </>
