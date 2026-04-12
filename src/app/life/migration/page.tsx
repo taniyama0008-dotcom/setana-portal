@@ -58,13 +58,13 @@ export default function MigrationPage() {
             '@context': 'https://schema.org',
             '@type': 'WebPage',
             name: 'せたな町の移住支援',
-            url: 'https://setana-portal.vercel.app/life/migration',
+            url: 'https://www.setana.life/life/migration',
             breadcrumb: {
               '@type': 'BreadcrumbList',
               itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://setana-portal.vercel.app' },
-                { '@type': 'ListItem', position: 2, name: '暮らす', item: 'https://setana-portal.vercel.app/life' },
-                { '@type': 'ListItem', position: 3, name: '移住支援', item: 'https://setana-portal.vercel.app/life/migration' },
+                { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://www.setana.life' },
+                { '@type': 'ListItem', position: 2, name: '暮らす', item: 'https://www.setana.life/life' },
+                { '@type': 'ListItem', position: 3, name: '移住支援', item: 'https://www.setana.life/life/migration' },
               ],
             },
           }),

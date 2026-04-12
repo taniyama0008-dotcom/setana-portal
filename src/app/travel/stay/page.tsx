@@ -28,13 +28,13 @@ export default async function StayPage() {
             '@context': 'https://schema.org',
             '@type': 'WebPage',
             name: 'せたな町の宿泊施設',
-            url: 'https://setana-portal.vercel.app/travel/stay',
+            url: 'https://www.setana.life/travel/stay',
             breadcrumb: {
               '@type': 'BreadcrumbList',
               itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://setana-portal.vercel.app' },
-                { '@type': 'ListItem', position: 2, name: '旅する', item: 'https://setana-portal.vercel.app/travel' },
-                { '@type': 'ListItem', position: 3, name: '泊まる', item: 'https://setana-portal.vercel.app/travel/stay' },
+                { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://www.setana.life' },
+                { '@type': 'ListItem', position: 2, name: '旅する', item: 'https://www.setana.life/travel' },
+                { '@type': 'ListItem', position: 3, name: '泊まる', item: 'https://www.setana.life/travel/stay' },
               ],
             },
           }),

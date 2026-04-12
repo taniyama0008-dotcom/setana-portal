@@ -119,9 +119,9 @@ export default async function Home() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'WebSite',
-            name: 'せたなの暮らし・食・自然',
+            name: 'SETANA',
             description: '北海道久遠郡せたな町の暮らし・食・自然を伝える地域総合メディア',
-            url: 'https://setana-portal.vercel.app',
+            url: 'https://www.setana.life',
           }),
         }}
       />

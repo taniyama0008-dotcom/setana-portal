@@ -76,13 +76,13 @@ export default async function LivingPage() {
             '@context': 'https://schema.org',
             '@type': 'WebPage',
             name: 'せたな町の暮らしのリアル',
-            url: 'https://setana-portal.vercel.app/life/living',
+            url: 'https://www.setana.life/life/living',
             breadcrumb: {
               '@type': 'BreadcrumbList',
               itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://setana-portal.vercel.app' },
-                { '@type': 'ListItem', position: 2, name: '暮らす', item: 'https://setana-portal.vercel.app/life' },
-                { '@type': 'ListItem', position: 3, name: '暮らしのリアル', item: 'https://setana-portal.vercel.app/life/living' },
+                { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://www.setana.life' },
+                { '@type': 'ListItem', position: 2, name: '暮らす', item: 'https://www.setana.life/life' },
+                { '@type': 'ListItem', position: 3, name: '暮らしのリアル', item: 'https://www.setana.life/life/living' },
               ],
             },
           }),

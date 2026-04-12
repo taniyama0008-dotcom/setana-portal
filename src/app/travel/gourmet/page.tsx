@@ -13,13 +13,13 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'せたな町グルメ',
-  url: 'https://setana-portal.vercel.app/travel/gourmet',
+  url: 'https://www.setana.life/travel/gourmet',
   breadcrumb: {
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://setana-portal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: '旅する', item: 'https://setana-portal.vercel.app/travel' },
-      { '@type': 'ListItem', position: 3, name: 'グルメ', item: 'https://setana-portal.vercel.app/travel/gourmet' },
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://www.setana.life' },
+      { '@type': 'ListItem', position: 2, name: '旅する', item: 'https://www.setana.life/travel' },
+      { '@type': 'ListItem', position: 3, name: 'グルメ', item: 'https://www.setana.life/travel/gourmet' },
     ],
   },
 }

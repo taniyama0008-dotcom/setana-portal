@@ -52,12 +52,12 @@ const jsonLd = {
   '@type': 'WebPage',
   name: 'せたな町を旅する',
   description: '北海道せたな町の旅行情報ガイド',
-  url: 'https://setana-portal.vercel.app/travel',
+  url: 'https://www.setana.life/travel',
   breadcrumb: {
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://setana-portal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: '旅する', item: 'https://setana-portal.vercel.app/travel' },
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://www.setana.life' },
+      { '@type': 'ListItem', position: 2, name: '旅する', item: 'https://www.setana.life/travel' },
     ],
   },
 }

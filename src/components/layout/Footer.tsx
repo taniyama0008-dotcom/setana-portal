@@ -21,8 +21,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 lg:gap-12 mb-10">
           {/* ブランド */}
           <div>
-            <p className="font-bold text-white text-[15px] mb-3">
-              せたなの暮らし・食・自然
+            <p className="font-bold text-white text-[17px] tracking-[0.1em] mb-3">
+              SETANA
             </p>
             <p className="text-[12px] text-white/40 leading-[1.8] max-w-xs">
               北海道久遠郡せたな町の暮らし・食・自然を伝える地域総合メディア。
@@ -65,7 +65,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p className="text-[11px] text-white/25">
-            © {new Date().getFullYear()} せたなの暮らし・食・自然
+            © 2026 SETANA
           </p>
           <div className="flex gap-5">
             <Link href="/support" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">

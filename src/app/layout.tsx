@@ -20,13 +20,17 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'せたなの暮らし・食・自然',
+  title: {
+    default: 'SETANA — 北海道せたな町の暮らし・食・自然',
+    template: '%s | SETANA',
+  },
   description: '北海道せたな町の暮らし・食・自然の情報が集まるポータルサイト。海と山に抱かれた町の、暮らしのすべて。',
   openGraph: {
-    title: 'せたなの暮らし・食・自然',
+    title: 'SETANA — 北海道せたな町の暮らし・食・自然',
     description: '北海道せたな町の暮らし・食・自然の情報が集まるポータルサイト。',
     locale: 'ja_JP',
     type: 'website',
+    siteName: 'SETANA',
   },
   verification: {
     google: '5YB9ukelsVJK1B4YM_wafZIF_RX_76zHY61LNRzo6mU',

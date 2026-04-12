@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://setana-portal.vercel.app/sitemap.xml',
+    sitemap: 'https://www.setana.life/sitemap.xml',
   }
 }

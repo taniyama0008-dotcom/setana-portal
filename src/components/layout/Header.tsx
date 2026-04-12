@@ -11,7 +11,8 @@ export default function Header() {
           className="text-[#1a1a1a] font-bold text-base tracking-wide leading-tight hover:opacity-70 transition-opacity shrink-0"
           style={{ fontFamily: 'var(--font-noto-sans-jp), sans-serif' }}
         >
-          せたなの暮らし・食・自然
+          <span className="text-[17px] font-bold tracking-[0.08em]">SETANA</span>
+          <span className="block text-[9px] font-normal text-[#8a8a8a] tracking-[0.12em] mt-0.5">暮らし・食・自然</span>
         </Link>
 
         <div className="flex items-center gap-1">

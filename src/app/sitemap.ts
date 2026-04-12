@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 
-const baseUrl = 'https://setana-portal.vercel.app'
+const baseUrl = 'https://www.setana.life'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: spots } = await supabase

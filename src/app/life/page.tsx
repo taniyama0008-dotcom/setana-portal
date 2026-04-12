@@ -43,12 +43,12 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'せたな町に暮らす',
-  url: 'https://setana-portal.vercel.app/life',
+  url: 'https://www.setana.life/life',
   breadcrumb: {
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://setana-portal.vercel.app' },
-      { '@type': 'ListItem', position: 2, name: '暮らす', item: 'https://setana-portal.vercel.app/life' },
+      { '@type': 'ListItem', position: 1, name: 'ホーム', item: 'https://www.setana.life' },
+      { '@type': 'ListItem', position: 2, name: '暮らす', item: 'https://www.setana.life/life' },
     ],
   },
 }
