@@ -1,0 +1,9 @@
+-- spots テーブルに宿泊関連カラムを追加
+ALTER TABLE spots
+  ADD COLUMN IF NOT EXISTS price_range    TEXT,
+  ADD COLUMN IF NOT EXISTS has_onsen      BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS has_meals      BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS booking_url    TEXT,
+  ADD COLUMN IF NOT EXISTS booking_phone  TEXT,
+  ADD COLUMN IF NOT EXISTS room_count     INTEGER,
+  ADD COLUMN IF NOT EXISTS capacity       INTEGER;
