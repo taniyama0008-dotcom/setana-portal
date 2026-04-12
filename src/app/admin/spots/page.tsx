@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import SectionBadge from '@/components/admin/SectionBadge'
 import StatusBadge from '@/components/admin/StatusBadge'
+import AreaBadge from '@/components/spot/AreaBadge'
 import SpotActions from './SpotActions'
 
 const sections = [
@@ -11,12 +12,19 @@ const sections = [
   { value: 'shizen',  label: '自然' },
 ]
 
+const areas = [
+  { value: '', label: 'すべて' },
+  { value: 'setana',     label: '瀬棚' },
+  { value: 'kitahiyama', label: '北檜山' },
+  { value: 'taisei',     label: '大成' },
+]
+
 export default async function AdminSpotsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ section?: string; q?: string }>
+  searchParams: Promise<{ section?: string; area?: string; q?: string }>
 }) {
-  const { section, q } = await searchParams
+  const { section, area, q } = await searchParams
 
   let query = supabaseAdmin
     .from('spots')
@@ -24,6 +32,7 @@ export default async function AdminSpotsPage({
     .order('created_at', { ascending: false })
 
   if (section) query = query.eq('section', section)
+  if (area) query = query.eq('area', area)
   if (q) query = query.ilike('name', `%${q}%`)
 
   const { data: spots } = await query
@@ -44,21 +53,52 @@ export default async function AdminSpotsPage({
       </div>
 
       {/* フィルタ */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="flex gap-1">
-          {sections.map((s) => (
-            <Link
-              key={s.value}
-              href={`/admin/spots${s.value ? `?section=${s.value}` : ''}`}
-              className={`px-3 py-1.5 text-[13px] rounded-md border transition-colors nav-label ${
-                (section ?? '') === s.value
-                  ? 'bg-[#5b7e95] text-white border-[#5b7e95]'
-                  : 'bg-white text-[#5c5c5c] border-[#e0e0e0] hover:border-[#5b7e95]'
-              }`}
-            >
-              {s.label}
-            </Link>
-          ))}
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-[#8a8a8a] mr-1">セクション</span>
+            {sections.map((s) => {
+              const params = new URLSearchParams()
+              if (s.value) params.set('section', s.value)
+              if (area) params.set('area', area)
+              if (q) params.set('q', q)
+              return (
+                <Link
+                  key={s.value}
+                  href={`/admin/spots${params.toString() ? `?${params}` : ''}`}
+                  className={`px-3 py-1.5 text-[12px] rounded-md border transition-colors nav-label ${
+                    (section ?? '') === s.value
+                      ? 'bg-[#5b7e95] text-white border-[#5b7e95]'
+                      : 'bg-white text-[#5c5c5c] border-[#e0e0e0] hover:border-[#5b7e95]'
+                  }`}
+                >
+                  {s.label}
+                </Link>
+              )
+            })}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-[#8a8a8a] mr-1">エリア</span>
+            {areas.map((a) => {
+              const params = new URLSearchParams()
+              if (section) params.set('section', section)
+              if (a.value) params.set('area', a.value)
+              if (q) params.set('q', q)
+              return (
+                <Link
+                  key={a.value}
+                  href={`/admin/spots${params.toString() ? `?${params}` : ''}`}
+                  className={`px-3 py-1.5 text-[12px] rounded-md border transition-colors nav-label ${
+                    (area ?? '') === a.value
+                      ? 'bg-[#1a1a1a] text-white border-[#1a1a1a]'
+                      : 'bg-white text-[#5c5c5c] border-[#e0e0e0] hover:border-[#1a1a1a]'
+                  }`}
+                >
+                  {a.label}
+                </Link>
+              )
+            })}
+          </div>
         </div>
         <form className="flex-1 max-w-xs">
           <input
@@ -92,7 +132,7 @@ export default async function AdminSpotsPage({
                   </div>
                 </td>
                 <td className="px-4 py-3"><SectionBadge section={spot.section} /></td>
-                <td className="px-4 py-3 text-[13px] text-[#5c5c5c]">{spot.area}</td>
+                <td className="px-4 py-3"><AreaBadge area={spot.area} /></td>
                 <td className="px-4 py-3"><StatusBadge status={spot.status} /></td>
                 <td className="px-4 py-3">
                   <SpotActions spotId={spot.id} currentStatus={spot.status} />

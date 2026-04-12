@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import SpotCard from '@/components/spot/SpotCard'
 import type { Spot } from '@/lib/types'
+import SpotListWithAreaFilter from '@/components/spot/SpotListWithAreaFilter'
 
 export const metadata: Metadata = {
   title: 'せたな町の観光・自然スポット｜絶景・アクティビティ',
@@ -64,14 +64,7 @@ export default async function NaturePage() {
           {list.length === 0 ? (
             <p className="text-[#8a8a8a] text-[14px] py-16 text-center">スポット情報を準備中です。</p>
           ) : (
-            <>
-              <p className="text-[#8a8a8a] text-[13px] mb-8">{list.length}件のスポット</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {list.map((spot) => (
-                  <SpotCard key={spot.id} spot={spot} />
-                ))}
-              </div>
-            </>
+            <SpotListWithAreaFilter spots={list} />
           )}
         </div>
       </section>

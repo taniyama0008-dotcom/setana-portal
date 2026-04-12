@@ -1,7 +1,7 @@
 export type Section = 'kurashi' | 'shoku' | 'shizen'
 export type SpotStatus = 'public' | 'draft' | 'review'
 export type ArticleStatus = 'public' | 'draft'
-export type Area = '瀬棚区' | '北檜山区' | '大成区'
+export type Area = 'setana' | 'kitahiyama' | 'taisei'
 export type ArticleCategory = 'story' | 'job_feature' | 'iju' | 'course' | 'special' | 'producer' | 'recipe' | 'guide'
 
 export interface Spot {
@@ -10,7 +10,7 @@ export interface Spot {
   slug: string
   section: Section
   category: string
-  area: Area
+  area: Area | null
   description: string | null
   address: string | null
   phone: string | null

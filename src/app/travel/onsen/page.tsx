@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import SpotCard from '@/components/spot/SpotCard'
 import type { Spot } from '@/lib/types'
+import SpotListWithAreaFilter from '@/components/spot/SpotListWithAreaFilter'
 
 export const metadata: Metadata = {
   title: 'せたな町の温泉｜日帰り・宿泊温泉ガイド',
@@ -73,12 +73,7 @@ export default async function OnsenPage() {
             </div>
           ) : (
             <>
-              <p className="text-[#8a8a8a] text-[13px] mb-8">{list.length}件の温泉スポット</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {list.map((spot) => (
-                  <SpotCard key={spot.id} spot={spot} />
-                ))}
-              </div>
+              <SpotListWithAreaFilter spots={list} />
             </>
           )}
         </div>

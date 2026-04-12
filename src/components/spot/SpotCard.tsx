@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Spot } from '@/lib/types'
+import AreaBadge from './AreaBadge'
 
 const sectionConfig = {
   kurashi: {
@@ -46,13 +47,16 @@ export default function SpotCard({ spot }: SpotCardProps) {
 
         {/* テキストエリア */}
         <div className="p-5 pb-6">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={`inline-block px-2 py-0.5 rounded text-white text-[11px] font-medium ${config.bgClass}`}>
               {config.label}
             </span>
-            <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">
-              {spot.category}
-            </span>
+            <AreaBadge area={spot.area} />
+            {spot.category && (
+              <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">
+                {spot.category}
+              </span>
+            )}
           </div>
           <h3 className="text-[15px] font-medium text-[#1a1a1a] leading-snug mb-1">
             {spot.name}

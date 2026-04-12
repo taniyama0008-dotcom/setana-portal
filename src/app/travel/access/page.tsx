@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import AreaMap from '@/components/spot/AreaMap'
 
 export const metadata: Metadata = {
   title: 'せたな町へのアクセス｜札幌・函館・新千歳からの交通案内',
@@ -112,6 +113,43 @@ export default function AccessPage() {
                     <p className="text-[14px] text-[#1a1a1a] leading-[1.7]">{route.bus}</p>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* エリアマップ */}
+        <section className="mb-16">
+          <div className="flex items-baseline gap-4 mb-8">
+            <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.2em] nav-label">AREA</p>
+            <div className="flex-1 h-px bg-[#efefef]" />
+          </div>
+          <h2 className="text-[#1a1a1a] text-[22px] font-bold mb-6 tracking-[0.02em]">3つのエリア</h2>
+
+          <AreaMap />
+
+          {/* エリア別説明 */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            {[
+              {
+                label: '瀬棚エリア',
+                accent: '#6b8fa3',
+                desc: '漁港と海岸線。三本杉岩、瀬棚物産などがある中心的な港町。',
+              },
+              {
+                label: '北檜山エリア',
+                accent: '#7d8f6b',
+                desc: '町役場がある行政の中心。玉川公園、丸山、飲食店が集中。',
+              },
+              {
+                label: '大成エリア',
+                accent: '#8f7d6b',
+                desc: '断崖と奇岩の海岸線。太田神社、親子熊岩など絶景スポットが集中。',
+              },
+            ].map((area) => (
+              <div key={area.label} className="bg-white rounded-[8px] p-4 border border-[#efefef]" style={{ borderTop: `3px solid ${area.accent}` }}>
+                <p className="text-[14px] font-bold text-[#1a1a1a] mb-2">{area.label}</p>
+                <p className="text-[13px] text-[#5c5c5c] leading-[1.7]">{area.desc}</p>
               </div>
             ))}
           </div>

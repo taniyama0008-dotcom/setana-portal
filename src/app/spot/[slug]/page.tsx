@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import type { Spot } from '@/lib/types'
 import ReviewSection from '@/components/reviews/ReviewSection'
+import AreaBadge, { areaConfig } from '@/components/spot/AreaBadge'
 
 // セクション設定
 const sectionConfig = {
@@ -166,13 +167,14 @@ export default async function SpotPage({
 
         {/* スポットヘッダー */}
         <header className="pb-10 border-b border-[#e0e0e0]">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             <span className={`inline-block px-2.5 py-1 rounded text-white text-[11px] font-medium ${sec.bgClass}`}>
               {sec.label}
             </span>
-            <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">{spot.category}</span>
-            <span className="text-[#e0e0e0]">·</span>
-            <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">{spot.area}</span>
+            <AreaBadge area={spot.area} />
+            {spot.category && (
+              <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">{spot.category}</span>
+            )}
           </div>
           <h1 className="text-[28px] lg:text-[32px] font-bold text-[#1a1a1a] leading-[1.4] tracking-[0.02em]">
             {spot.name}
@@ -196,6 +198,7 @@ export default async function SpotPage({
             </h2>
             <table className="w-full">
               <tbody>
+                <InfoRow label="エリア" value={spot.area ? (areaConfig[spot.area]?.label ?? null) : null} />
                 <InfoRow label="住所" value={spot.address} />
                 <InfoRow label="電話" value={spot.phone} />
                 <InfoRow label="営業時間" value={spot.business_hours} />
