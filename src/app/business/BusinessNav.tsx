@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 const tabs = [
   { href: '/business',         label: 'ダッシュボード' },
+  { href: '/business/jobs',    label: '求人管理' },
   { href: '/business/reviews', label: '口コミ・返信' },
 ]
 

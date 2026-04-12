@@ -3,30 +3,101 @@ import { supabase } from '@/lib/supabase'
 import SpotCard from '@/components/spot/SpotCard'
 import type { Spot } from '@/lib/types'
 
-const sections = [
+const travelCards = [
   {
-    href: '/kurashi',
-    label: '暮らし',
-    labelEn: 'KURASHI',
-    description: '移住・子育て・仕事・住まい。せたな町で生きることのリアルを伝えます。',
+    href: '/travel/gourmet',
+    label: 'グルメ',
+    labelEn: 'GOURMET',
+    description: '日本海の幸、山の幸。地元食堂から海鮮まで。',
+    gradient: 'from-[#c47e4f] to-[#8a5535]',
+    accent: '#c47e4f',
+  },
+  {
+    href: '/travel/nature',
+    label: '観光・自然',
+    labelEn: 'NATURE',
+    description: '狩場山、断崖の霊場、日本海の絶景。',
+    gradient: 'from-[#6b8f71] to-[#3d5c42]',
+    accent: '#6b8f71',
+  },
+  {
+    href: '/travel/onsen',
+    label: '温泉',
+    labelEn: 'ONSEN',
+    description: '旅の疲れを癒すせたなの温泉。',
     gradient: 'from-[#5b7e95] to-[#3d5a6e]',
-    cta: 'bg-[#5b7e95] hover:bg-[#3d5a6e]',
+    accent: '#5b7e95',
   },
   {
-    href: '/shoku',
-    label: '食',
-    labelEn: 'SHOKU',
-    description: '日本海の幸、山の恵み。せたな町の食の豊かさをご紹介します。',
+    href: '/travel/stay',
+    label: '泊まる',
+    labelEn: 'STAY',
+    description: '海辺のホテルから山のキャンプ場まで。',
+    gradient: 'from-[#3d5a6e] to-[#2a3f50]',
+    accent: '#3d5a6e',
+  },
+  {
+    href: '/travel/access',
+    label: 'アクセス',
+    labelEn: 'ACCESS',
+    description: '札幌・函館・新千歳からの交通案内。',
+    gradient: 'from-[#6e6e6e] to-[#3a3a3a]',
+    accent: '#6e6e6e',
+  },
+]
+
+const lifeCards = [
+  {
+    href: '/life/work',
+    label: 'しごと・求人',
+    labelEn: 'WORK',
+    description: '正規・季節・地域おこし協力隊まで。せたなで働くすべての情報。',
     gradient: 'from-[#c47e4f] to-[#a5663a]',
-    cta: 'bg-[#c47e4f] hover:bg-[#a5663a]',
+    accent: '#c47e4f',
+    large: true,
   },
   {
-    href: '/shizen',
-    label: '自然',
-    labelEn: 'SHIZEN',
-    description: '狩場山、日本海、断崖の霊場。せたな町の豊かな自然に触れてください。',
+    href: '/life/living',
+    label: '暮らしのリアル',
+    labelEn: 'LIVING',
+    description: '冬の生活、医療、買い物事情。移住前に知っておきたいこと。',
+    gradient: 'from-[#5b7e95] to-[#3d5a6e]',
+    accent: '#5b7e95',
+    large: false,
+  },
+  {
+    href: '/life/migration',
+    label: '移住支援',
+    labelEn: 'MIGRATION',
+    description: '補助金・体験住宅・相談窓口の一覧。',
     gradient: 'from-[#6b8f71] to-[#4a6b50]',
-    cta: 'bg-[#6b8f71] hover:bg-[#4a6b50]',
+    accent: '#6b8f71',
+    large: false,
+  },
+]
+
+// プレースホルダー記事データ
+const placeholderArticles = [
+  {
+    category: '暮らし',
+    date: '2026年4月',
+    title: 'せたな町の春の山菜採り — 自然と共に生きる暮らし',
+    excerpt: '雪解けとともに山に入り、ふきのとうやコゴミを摘む。せたなの春の風物詩を移住者の目線でレポート。',
+    color: '#5b7e95',
+  },
+  {
+    category: '食',
+    date: '2026年3月',
+    title: '港直送のスケソウダラ — 漁師町の朝市を歩く',
+    excerpt: '早朝5時、瀬棚漁港に並ぶ新鮮な魚たち。漁師さんとの会話から生まれる、せたならしい食の風景。',
+    color: '#c47e4f',
+  },
+  {
+    category: '自然',
+    date: '2026年3月',
+    title: '三本杉岩と夕日 — せたな町が誇る絶景スポット',
+    excerpt: '日本海に突き刺さる3本の奇岩。夕暮れ時、水平線に沈む太陽がシルエットを金色に染め上げる。',
+    color: '#6b8f71',
   },
 ]
 
@@ -35,6 +106,7 @@ export default async function Home() {
     .from('spots')
     .select('*')
     .eq('status', 'public')
+    .in('section', ['shoku', 'shizen'])
     .order('created_at', { ascending: false })
     .limit(6)
 
@@ -54,48 +126,82 @@ export default async function Home() {
         }}
       />
 
-      {/* ヒーローセクション */}
-      <section className="relative h-[70vh] min-h-[480px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3d5a6e] via-[#5b7e95] to-[#4a6b50]" />
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="relative z-10 text-center px-5 max-w-[860px] mx-auto">
-          <p className="text-white/70 text-[13px] font-medium tracking-[0.2em] mb-4 nav-label">
-            HOKKAIDO / SETANA
+      {/* ─── ヒーロー ──────────────────────────────────────── */}
+      <section className="relative h-[75vh] min-h-[520px] flex items-end overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a35] via-[#2d4a5e] to-[#3d5c42]" />
+        {/* 波紋テクスチャ */}
+        <div className="absolute inset-0 opacity-[0.06]" style={{
+          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.5) 39px, rgba(255,255,255,0.5) 40px),
+                            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.5) 39px, rgba(255,255,255,0.5) 40px)`,
+        }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-16 lg:pb-24">
+          <p className="text-white/50 text-[11px] font-medium tracking-[0.25em] mb-5 nav-label">
+            HOKKAIDO / SETANA-CHO
           </p>
-          <h1 className="text-white font-bold text-[28px] lg:text-[36px] leading-[1.4] tracking-[0.02em] mb-6">
-            せたなの暮らし・食・自然
+          <h1 className="text-white font-light text-[32px] lg:text-[52px] leading-[1.3] tracking-[0.02em] mb-5" style={{ fontWeight: 300 }}>
+            海と山に抱かれた町の、<br className="hidden sm:block" />
+            <span className="font-bold">暮らしのすべて。</span>
           </h1>
-          <p className="text-white/85 text-[16px] lg:text-[18px] leading-relaxed tracking-[0.06em]">
-            海と山に抱かれた町の、暮らしのすべて。
+          <p className="text-white/70 text-[15px] lg:text-[17px] leading-[1.9] tracking-[0.06em] max-w-[480px]">
+            北海道久遠郡せたな町 — グルメ・自然・温泉を旅する人にも、<br className="hidden sm:block" />
+            移住・仕事を探す人にも。
           </p>
+          <div className="flex gap-4 mt-8 flex-wrap">
+            <Link
+              href="/travel"
+              className="px-7 py-3.5 bg-[#c47e4f] hover:bg-[#a5663a] text-white text-[14px] font-medium rounded-[8px] transition-colors min-h-[48px] flex items-center"
+            >
+              旅する →
+            </Link>
+            <Link
+              href="/life"
+              className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white text-[14px] font-medium rounded-[8px] transition-colors min-h-[48px] flex items-center border border-white/20"
+            >
+              暮らす →
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* 3セクション導線 */}
-      <section className="py-24 px-5 lg:px-8">
+      {/* ─── せたなを旅する ─────────────────────────────────── */}
+      <section className="bg-[#1a1a1a] py-20 lg:py-28 px-5 lg:px-8">
         <div className="max-w-[1120px] mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8">
-            {sections.map((sec) => (
-              <Link key={sec.href} href={sec.href} className="group block">
-                <div className="rounded-[8px] overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
-                  {/* 写真エリア */}
-                  <div className={`h-48 bg-gradient-to-br ${sec.gradient}`} />
+          {/* セクションヘッダー */}
+          <div className="flex items-baseline gap-4 mb-12">
+            <p className="text-white/30 text-[11px] font-medium tracking-[0.25em] nav-label">TRAVEL</p>
+            <div className="flex-1 h-px bg-white/10" />
+            <Link href="/travel" className="text-white/50 text-[12px] hover:text-white/80 transition-colors nav-label">
+              すべて見る →
+            </Link>
+          </div>
+          <h2 className="text-white text-[28px] lg:text-[36px] font-bold tracking-[0.02em] mb-3" style={{ fontWeight: 300 }}>
+            せたなを<span className="font-bold">旅する</span>
+          </h2>
+          <p className="text-white/50 text-[14px] leading-[1.8] tracking-[0.06em] mb-12 max-w-[480px]">
+            グルメ・自然・温泉・宿泊。日本海と山に囲まれたせたな町の旅行ガイド。
+          </p>
+
+          {/* 5カード */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+            {travelCards.map((card, i) => (
+              <Link
+                key={card.href}
+                href={card.href}
+                className={`group block ${i === 0 ? 'col-span-2 lg:col-span-2' : 'col-span-1'}`}
+              >
+                <div className="relative overflow-hidden rounded-[8px]">
+                  {/* 背景 */}
+                  <div className={`bg-gradient-to-br ${card.gradient} ${i === 0 ? 'h-52 lg:h-64' : 'h-36 lg:h-48'} group-hover:scale-[1.02] transition-transform duration-500`} />
+                  {/* オーバーレイ */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   {/* テキスト */}
-                  <div className="p-6 bg-white">
-                    <p className="text-[11px] font-medium text-[#8a8a8a] tracking-[0.15em] mb-1 nav-label">
-                      {sec.labelEn}
-                    </p>
-                    <h2 className="text-[22px] font-semibold text-[#1a1a1a] mb-3 tracking-[0.03em]">
-                      {sec.label}
-                    </h2>
-                    <p className="text-[14px] text-[#5c5c5c] leading-[1.8] mb-5">
-                      {sec.description}
-                    </p>
-                    <span
-                      className={`inline-block px-5 py-2.5 text-white text-[13px] font-medium rounded-[8px] transition-colors ${sec.cta}`}
-                    >
-                      もっと見る
-                    </span>
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-white/50 text-[10px] font-medium tracking-[0.2em] mb-1 nav-label">{card.labelEn}</p>
+                    <p className="text-white font-bold text-[16px] lg:text-[18px] tracking-[0.02em]">{card.label}</p>
+                    {i === 0 && (
+                      <p className="text-white/60 text-[12px] mt-1 leading-[1.6]">{card.description}</p>
+                    )}
                   </div>
                 </div>
               </Link>
@@ -104,18 +210,117 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 新着スポット */}
+      {/* ─── せたなに暮らす ─────────────────────────────────── */}
+      <section className="bg-[#faf8f5] py-20 lg:py-28 px-5 lg:px-8">
+        <div className="max-w-[1120px] mx-auto">
+          {/* セクションヘッダー */}
+          <div className="flex items-baseline gap-4 mb-12">
+            <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">LIFE</p>
+            <div className="flex-1 h-px bg-[#e0e0e0]" />
+            <Link href="/life" className="text-[#8a8a8a] text-[12px] hover:text-[#1a1a1a] transition-colors nav-label">
+              すべて見る →
+            </Link>
+          </div>
+          <h2 className="text-[#1a1a1a] text-[28px] lg:text-[36px] tracking-[0.02em] mb-3" style={{ fontWeight: 300 }}>
+            せたなに<span className="font-bold">暮らす</span>
+          </h2>
+          <p className="text-[#5c5c5c] text-[14px] leading-[1.8] tracking-[0.06em] mb-12 max-w-[480px]">
+            仕事を探す人、移住を考える人。せたなで生きることのリアルを、まっすぐに伝えます。
+          </p>
+
+          {/* 3カード — しごとを最大化 */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+            {lifeCards.map((card) => (
+              <Link
+                key={card.href}
+                href={card.href}
+                className={`group block ${card.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
+              >
+                <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+                  {/* 写真エリア */}
+                  <div
+                    className={`bg-gradient-to-br ${card.gradient} ${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
+                  />
+                  {/* テキストエリア */}
+                  <div className="p-6">
+                    <p className="text-[10px] font-medium tracking-[0.2em] mb-2 nav-label" style={{ color: card.accent }}>
+                      {card.labelEn}
+                    </p>
+                    <h3 className={`font-bold text-[#1a1a1a] tracking-[0.02em] mb-2 ${card.large ? 'text-[20px]' : 'text-[17px]'}`}>
+                      {card.label}
+                    </h3>
+                    <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">{card.description}</p>
+                    <p className="mt-4 text-[12px] font-medium transition-colors nav-label" style={{ color: card.accent }}>
+                      くわしく見る →
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 今のせたな（新着情報） ─────────────────────────── */}
+      <section className="bg-white py-20 lg:py-28 px-5 lg:px-8">
+        <div className="max-w-[1120px] mx-auto">
+          <div className="flex items-baseline gap-4 mb-12">
+            <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">NOW</p>
+            <div className="flex-1 h-px bg-[#efefef]" />
+          </div>
+          <h2 className="text-[#1a1a1a] text-[28px] lg:text-[36px] tracking-[0.02em] mb-12" style={{ fontWeight: 300 }}>
+            今の<span className="font-bold">せたな</span>
+          </h2>
+
+          {/* 記事3件 */}
+          <div className="space-y-0">
+            {placeholderArticles.map((article, i) => (
+              <article
+                key={i}
+                className="flex items-start gap-6 py-8 border-b border-[#efefef] last:border-0 group cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                {/* 写真プレースホルダー */}
+                <div
+                  className="w-[100px] h-[68px] lg:w-[140px] lg:h-[94px] rounded-[6px] shrink-0 opacity-80"
+                  style={{ background: `linear-gradient(135deg, ${article.color}88, ${article.color}44)` }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span
+                      className="text-[10px] font-medium tracking-[0.1em] px-2 py-0.5 rounded"
+                      style={{ backgroundColor: `${article.color}18`, color: article.color }}
+                    >
+                      {article.category}
+                    </span>
+                    <time className="text-[12px] text-[#8a8a8a]">{article.date}</time>
+                  </div>
+                  <h3 className="text-[15px] lg:text-[16px] font-medium text-[#1a1a1a] leading-[1.6] tracking-[0.03em] mb-2 line-clamp-2">
+                    {article.title}
+                  </h3>
+                  <p className="text-[13px] text-[#5c5c5c] leading-[1.8] hidden sm:line-clamp-2">
+                    {article.excerpt}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── おすすめスポット ───────────────────────────────── */}
       {spots && spots.length > 0 && (
-        <section className="py-24 px-5 lg:px-8 bg-[#faf8f5]">
+        <section className="py-20 lg:py-28 px-5 lg:px-8 bg-[#faf8f5]">
           <div className="max-w-[1120px] mx-auto">
-            <div className="mb-12">
-              <p className="text-[11px] font-medium text-[#8a8a8a] tracking-[0.15em] mb-2 nav-label">
-                SPOTS
-              </p>
-              <h2 className="text-[28px] font-bold text-[#1a1a1a] tracking-[0.02em]">
-                新着スポット
-              </h2>
+            <div className="flex items-baseline gap-4 mb-12">
+              <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">SPOTS</p>
+              <div className="flex-1 h-px bg-[#e0e0e0]" />
+              <Link href="/travel" className="text-[#8a8a8a] text-[12px] hover:text-[#1a1a1a] transition-colors nav-label">
+                すべて見る →
+              </Link>
             </div>
+            <h2 className="text-[#1a1a1a] text-[28px] tracking-[0.02em] mb-12" style={{ fontWeight: 300 }}>
+              おすすめ<span className="font-bold">スポット</span>
+            </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {(spots as Spot[]).map((spot) => (

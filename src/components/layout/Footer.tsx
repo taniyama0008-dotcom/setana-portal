@@ -1,37 +1,77 @@
 import Link from 'next/link'
 
+const travelLinks = [
+  { href: '/travel/gourmet', label: 'グルメ' },
+  { href: '/travel/nature',  label: '観光・自然' },
+  { href: '/travel/onsen',   label: '温泉' },
+  { href: '/travel/stay',    label: '泊まる' },
+  { href: '/travel/access',  label: 'アクセス' },
+]
+
+const lifeLinks = [
+  { href: '/life/work',      label: 'しごと・求人' },
+  { href: '/life/living',    label: '暮らしのリアル' },
+  { href: '/life/migration', label: '移住支援' },
+]
+
 export default function Footer() {
   return (
-    <footer className="bg-[#faf8f5] border-t border-[#e0e0e0] mt-24">
-      <div className="max-w-[1120px] mx-auto px-5 lg:px-8 py-12">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-8">
+    <footer className="bg-[#1a1a1a] mt-0">
+      <div className="max-w-[1120px] mx-auto px-5 lg:px-8 py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 lg:gap-12 mb-10">
+          {/* ブランド */}
           <div>
-            <p className="font-bold text-[#1a1a1a] text-base mb-2">
+            <p className="font-bold text-white text-[15px] mb-3">
               せたなの暮らし・食・自然
             </p>
-            <p className="text-[12px] text-[#8a8a8a] leading-relaxed max-w-xs">
+            <p className="text-[12px] text-white/40 leading-[1.8] max-w-xs">
               北海道久遠郡せたな町の暮らし・食・自然を伝える地域総合メディア。
               海と山に抱かれた町の、暮らしのすべて。
             </p>
           </div>
 
-          <nav className="flex gap-6 nav-label">
-            <Link href="/kurashi" className="text-[13px] text-[#5c5c5c] hover:text-[#5b7e95] transition-colors">
-              暮らし
-            </Link>
-            <Link href="/shoku" className="text-[13px] text-[#5c5c5c] hover:text-[#c47e4f] transition-colors">
-              食
-            </Link>
-            <Link href="/shizen" className="text-[13px] text-[#5c5c5c] hover:text-[#6b8f71] transition-colors">
-              自然
-            </Link>
-          </nav>
+          {/* 旅する */}
+          <div>
+            <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">TRAVEL</p>
+            <nav className="space-y-2">
+              {travelLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* 暮らす */}
+          <div>
+            <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">LIFE</p>
+            <nav className="space-y-2">
+              {lifeLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-[#efefef]">
-          <p className="text-[12px] text-[#8a8a8a]">
+        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p className="text-[11px] text-white/25">
             © {new Date().getFullYear()} せたなの暮らし・食・自然
           </p>
+          <div className="flex gap-5">
+            <Link href="/support" className="text-[11px] text-white/25 hover:text-white/60 transition-colors">
+              応援する
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
