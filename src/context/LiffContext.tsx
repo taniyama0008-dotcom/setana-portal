@@ -13,6 +13,7 @@ import { getLiff, type LiffProfile } from '@/lib/liff'
 interface LiffContextValue {
   isLoading: boolean
   isLoggedIn: boolean
+  isSynced: boolean   // /api/auth/line でセッションCookieのセット完了
   profile: LiffProfile | null
   login: () => void
   logout: () => void
@@ -21,6 +22,7 @@ interface LiffContextValue {
 const LiffContext = createContext<LiffContextValue>({
   isLoading: true,
   isLoggedIn: false,
+  isSynced: false,
   profile: null,
   login: () => {},
   logout: () => {},
@@ -29,6 +31,7 @@ const LiffContext = createContext<LiffContextValue>({
 export function LiffProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading]   = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isSynced, setIsSynced]     = useState(false)
   const [profile, setProfile]       = useState<LiffProfile | null>(null)
 
   useEffect(() => {
@@ -65,21 +68,26 @@ export function LiffProvider({ children }: { children: ReactNode }) {
             statusMessage: p.statusMessage,
           })
 
-          // セッションクッキーをサーバーに同期（失敗してもユーザー体験は維持）
+          // セッションクッキーをサーバーに同期（完了後に isSynced = true）
           const idToken = liff.getIDToken()
           console.log('[LIFF] getIDToken():', idToken ? `${idToken.slice(0, 20)}...` : 'null — openid scope が未設定の可能性')
           if (idToken) {
-            fetch('/api/auth/line', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken }),
-            })
-              .then(async (r) => {
-                const json = await r.json().catch(() => null)
-                console.log('[LIFF] session sync —', r.status, json)
+            try {
+              const r = await fetch('/api/auth/line', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
               })
-              .catch((err) => console.warn('[LIFF] session sync failed:', err))
+              const json = await r.json().catch(() => null)
+              console.log('[LIFF] session sync —', r.status, json)
+            } catch (err) {
+              console.warn('[LIFF] session sync failed:', err)
+            }
+          } else {
+            // idToken なし（openid scope 未設定等）: Cookie セット不要、そのまま完了扱い
+            console.warn('[LIFF] no idToken — skipping session sync')
           }
+          if (!cancelled) setIsSynced(true)
         } catch (err) {
           console.error('[LIFF] getProfile failed:', err)
         }
@@ -116,7 +124,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <LiffContext.Provider value={{ isLoading, isLoggedIn, profile, login, logout }}>
+    <LiffContext.Provider value={{ isLoading, isLoggedIn, isSynced, profile, login, logout }}>
       {children}
     </LiffContext.Provider>
   )

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useLiff } from '@/context/LiffContext'
 
 export default function LineLoginButton() {
-  const { isLoading, isLoggedIn, profile, login, logout } = useLiff()
+  const { isLoading, isLoggedIn, isSynced, profile, login, logout } = useLiff()
 
   // LIFF初期化中はスペースを確保してレイアウトシフトを防ぐ
   if (isLoading) {
@@ -31,25 +31,45 @@ export default function LineLoginButton() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* プロフィール表示 → マイページへ */}
-      <Link href="/mypage" className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] hover:bg-[#f5f5f5] transition-colors">
-        {profile?.pictureUrl ? (
-          <Image
-            src={profile.pictureUrl}
-            alt={profile.displayName}
-            width={28}
-            height={28}
-            className="rounded-full"
-          />
-        ) : (
-          <div className="w-7 h-7 rounded-full bg-[#06C755] flex items-center justify-center text-white text-[11px] font-medium">
-            {profile?.displayName.slice(0, 1) ?? 'L'}
-          </div>
-        )}
-        <span className="text-[13px] text-[#1a1a1a] font-medium max-w-[80px] truncate hidden sm:block">
-          マイページ
-        </span>
-      </Link>
+      {/* プロフィール表示 → マイページへ（セッション同期完了後にリンク有効化） */}
+      {isSynced ? (
+        <Link href="/mypage" className="flex items-center gap-2 px-2 py-1.5 rounded-[6px] hover:bg-[#f5f5f5] transition-colors">
+          {profile?.pictureUrl ? (
+            <Image
+              src={profile.pictureUrl}
+              alt={profile.displayName}
+              width={28}
+              height={28}
+              className="rounded-full"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-[#06C755] flex items-center justify-center text-white text-[11px] font-medium">
+              {profile?.displayName.slice(0, 1) ?? 'L'}
+            </div>
+          )}
+          <span className="text-[13px] text-[#1a1a1a] font-medium max-w-[80px] truncate hidden sm:block">
+            マイページ
+          </span>
+        </Link>
+      ) : (
+        // セッション同期中: アバターのみ表示（クリック不可）
+        <div className="flex items-center gap-2 px-2 py-1.5 opacity-60">
+          {profile?.pictureUrl ? (
+            <Image
+              src={profile.pictureUrl}
+              alt={profile.displayName}
+              width={28}
+              height={28}
+              className="rounded-full"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-[#06C755] flex items-center justify-center text-white text-[11px] font-medium">
+              {profile?.displayName.slice(0, 1) ?? 'L'}
+            </div>
+          )}
+          <span className="text-[13px] text-[#8a8a8a] hidden sm:block">読込中…</span>
+        </div>
+      )}
 
       {/* ログアウト */}
       <button
