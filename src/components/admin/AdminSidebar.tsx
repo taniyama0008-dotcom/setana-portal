@@ -9,6 +9,7 @@ const navItems = [
   { href: '/admin/jobs',    label: '求人管理',       icon: '◑' },
   { href: '/admin/reviews', label: '口コミ管理',     icon: '◎' },
   { href: '/admin/users',   label: 'ユーザー管理',   icon: '◐' },
+  { href: '/admin/reports', label: '通報・情報管理',  icon: '◉' },
   { href: '/admin/events',  label: 'イベント管理',   icon: '◈' },
   { href: '/admin/content', label: 'コンテンツ管理', icon: '◇' },
 ]

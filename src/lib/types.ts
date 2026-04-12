@@ -99,6 +99,50 @@ export interface KyoryokutaiListing {
   updated_at: string
 }
 
+// ─── 通報システム ───────────────────────────────────────────
+export type ReportCategory =
+  | 'road' | 'streetlight' | 'park' | 'snow' | 'other'
+  | 'shop_closed' | 'shop_hours' | 'shop_crowded' | 'weather' | 'event_info' | 'other_info'
+
+export type ReportType   = 'infrastructure' | 'realtime_info'
+export type ReportStatus = 'received' | 'confirmed' | 'in_progress' | 'resolved' | 'rejected'
+export type CoinReason   = 'report_infra' | 'report_info' | 'photo_bonus' | 'review' | 'helpful_bonus' | 'redeem'
+
+export interface Report {
+  id: string
+  report_number: string
+  user_id: string | null
+  line_user_id: string | null
+  reporter_name: string | null
+  category: ReportCategory
+  report_type: ReportType
+  description: string | null
+  spot_id: string | null
+  spot_name: string | null
+  photo_url: string | null
+  latitude: number | null
+  longitude: number | null
+  status: ReportStatus
+  is_public: boolean
+  public_message: string | null
+  forwarded_to: string | null
+  forwarded_at: string | null
+  admin_note: string | null
+  resolved_at: string | null
+  coins_awarded: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CoinTransaction {
+  id: string
+  user_id: string
+  amount: number
+  reason: CoinReason
+  reference_id: string | null
+  created_at: string
+}
+
 export interface Article {
   id: string
   title: string

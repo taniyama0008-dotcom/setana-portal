@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import SpotCard from '@/components/spot/SpotCard'
-import type { Spot, CalendarEvent } from '@/lib/types'
+import type { Spot, CalendarEvent, Report } from '@/lib/types'
 
 const travelCards = [
   {
@@ -107,7 +107,7 @@ const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9�
 export default async function Home() {
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: spots }, { data: upcomingEvents }] = await Promise.all([
+  const [{ data: spots }, { data: upcomingEvents }, { data: publicReports }] = await Promise.all([
     supabase
       .from('spots')
       .select('*')
@@ -122,9 +122,16 @@ export default async function Home() {
       .gte('start_date', today)
       .order('start_date', { ascending: true })
       .limit(3),
+    supabase
+      .from('reports')
+      .select('id, category, report_type, description, public_message, spot_name, reporter_name, photo_url, created_at')
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .limit(5),
   ])
 
-  const events = (upcomingEvents ?? []) as CalendarEvent[]
+  const events  = (upcomingEvents ?? []) as CalendarEvent[]
+  const reports = (publicReports ?? []) as Report[]
 
   return (
     <>
@@ -326,9 +333,53 @@ export default async function Home() {
             <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">NOW</p>
             <div className="flex-1 h-px bg-[#efefef]" />
           </div>
-          <h2 className="text-[#1a1a1a] text-[28px] lg:text-[36px] tracking-[0.02em] mb-12" style={{ fontWeight: 300 }}>
-            今の<span className="font-bold">せたな</span>
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[#1a1a1a] text-[28px] lg:text-[36px] tracking-[0.02em]" style={{ fontWeight: 300 }}>
+              今の<span className="font-bold">せたな</span>
+            </h2>
+            <Link href="/reports" className="text-[#8a8a8a] text-[12px] hover:text-[#1a1a1a] transition-colors nav-label">
+              もっと見る →
+            </Link>
+          </div>
+
+          {/* リアルタイム情報 */}
+          {reports.length > 0 && (
+            <div className="mb-10 space-y-3">
+              {reports.map((r) => {
+                const icons: Record<string, string> = {
+                  road: '🚧', streetlight: '💡', park: '🏞️', snow: '❄️',
+                  shop_closed: '🏪', shop_hours: '🕐', shop_crowded: '👥',
+                  weather: '🌤️', event_info: '📢', other: '📌', other_info: '📝',
+                }
+                const catLabels: Record<string, string> = {
+                  road: '道路', streetlight: '街灯', park: '公園・遊具', snow: '除雪',
+                  shop_closed: '臨時休業', shop_hours: '営業時間変更', shop_crowded: '混雑',
+                  weather: '天候・道路', event_info: 'イベント', other: 'その他', other_info: 'その他',
+                }
+                const diff  = Date.now() - new Date(r.created_at).getTime()
+                const mins  = Math.floor(diff / 60000)
+                const hours = Math.floor(diff / 3600000)
+                const timeStr = mins < 60 ? `${mins}分前` : hours < 24 ? `${hours}時間前` : `${Math.floor(diff / 86400000)}日前`
+
+                return (
+                  <Link key={r.id} href="/reports" className="flex items-start gap-3 px-4 py-3 bg-[#faf8f5] rounded-[8px] border border-[#efefef] hover:border-[#5b7e95] transition-colors group">
+                    <span className="text-[20px] shrink-0">{icons[r.category] ?? '📌'}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded nav-label bg-[#e8f0f4] text-[#3d5a6e]">{catLabels[r.category]}</span>
+                        <span className="text-[11px] text-[#c0c0c0]">{timeStr}</span>
+                      </div>
+                      <p className="text-[13px] text-[#1a1a1a] line-clamp-1 leading-snug">
+                        {r.public_message ?? r.description ?? ''}
+                      </p>
+                      {r.spot_name && <p className="text-[11px] text-[#8a8a8a] mt-0.5">📍 {r.spot_name}</p>}
+                    </div>
+                    <span className="text-[#e0e0e0] group-hover:text-[#5b7e95] text-[12px] shrink-0">→</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
 
           {/* 記事3件 */}
           <div className="space-y-0">

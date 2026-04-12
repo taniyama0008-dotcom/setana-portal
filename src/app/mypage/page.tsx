@@ -23,10 +23,10 @@ export default async function MyPage() {
   const uid = await getSessionUserId()
   if (!uid) redirect('/')
 
-  const [{ data: user }, { data: myReviews }] = await Promise.all([
+  const [{ data: user }, { data: myReviews }, { data: coinTxs }] = await Promise.all([
     supabaseAdmin
       .from('users')
-      .select('id, nickname, line_display_name, line_picture_url, role, created_at')
+      .select('id, nickname, line_display_name, line_picture_url, role, coin_balance, created_at')
       .eq('id', uid)
       .single(),
     supabaseAdmin
@@ -34,6 +34,12 @@ export default async function MyPage() {
       .select('id, rating, text, visit_date, status, created_at, spots(name, slug, section)')
       .eq('user_id', uid)
       .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('coin_transactions')
+      .select('id, amount, reason, created_at')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(20),
   ])
 
   return (
@@ -98,12 +104,61 @@ export default async function MyPage() {
 
         <div className="my-10 border-t border-[#e0e0e0]" />
 
-        {/* せたなコイン（将来実装） */}
-        <section className="opacity-50">
-          <h2 className="text-[16px] font-semibold text-[#1a1a1a] tracking-[0.03em] mb-3">
+        {/* せたなコイン */}
+        <section>
+          <h2 className="text-[16px] font-semibold text-[#1a1a1a] tracking-[0.03em] mb-5">
             せたなコイン
           </h2>
-          <p className="text-[13px] text-[#8a8a8a]">この機能は近日公開予定です。</p>
+
+          {/* 残高カード */}
+          <div className="bg-gradient-to-br from-[#c47e4f] to-[#8a5535] rounded-[12px] p-6 text-white mb-6">
+            <p className="text-[11px] font-medium tracking-[0.2em] opacity-70 nav-label mb-2">COIN BALANCE</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[42px] font-bold leading-none tabular-nums">{user?.coin_balance ?? 0}</span>
+              <span className="text-[16px] opacity-80">コイン</span>
+            </div>
+            <p className="text-[12px] opacity-60 mt-3">通報・情報提供・口コミ投稿で貯まります</p>
+          </div>
+
+          {/* 特典交換（プレースホルダー） */}
+          <div className="mb-6 border border-[#e0e0e0] rounded-[10px] p-4 flex items-center justify-between opacity-60">
+            <div>
+              <p className="text-[13px] font-medium text-[#1a1a1a]">特典と交換</p>
+              <p className="text-[12px] text-[#8a8a8a]">5月実装予定</p>
+            </div>
+            <button disabled className="px-4 py-2 bg-[#e0e0e0] text-[#8a8a8a] text-[12px] rounded-[6px] cursor-not-allowed">
+              近日公開
+            </button>
+          </div>
+
+          {/* コイン履歴 */}
+          {coinTxs && coinTxs.length > 0 ? (
+            <div>
+              <p className="text-[13px] font-medium text-[#1a1a1a] mb-3">コイン履歴</p>
+              <ul className="space-y-0">
+                {coinTxs.map((tx: any) => {
+                  const reasonLabels: Record<string, string> = {
+                    report_infra: 'インフラ通報', report_info: '情報提供',
+                    photo_bonus: '写真ボーナス', review: '口コミ投稿',
+                    helpful_bonus: '役に立った', redeem: '特典交換',
+                  }
+                  return (
+                    <li key={tx.id} className="flex items-center justify-between py-3 border-b border-[#efefef] last:border-0">
+                      <div>
+                        <p className="text-[13px] text-[#1a1a1a]">{reasonLabels[tx.reason] ?? tx.reason}</p>
+                        <time className="text-[11px] text-[#8a8a8a]">{formatDate(tx.created_at)}</time>
+                      </div>
+                      <span className={`text-[14px] font-bold tabular-nums ${tx.amount > 0 ? 'text-[#c47e4f]' : 'text-[#8a8a8a]'}`}>
+                        {tx.amount > 0 ? '+' : ''}{tx.amount}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#8a8a8a]">コイン履歴がありません。LINEで「通報」と送ってコインを貯めましょう！</p>
+          )}
         </section>
 
       </div>
