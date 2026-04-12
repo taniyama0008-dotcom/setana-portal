@@ -23,6 +23,33 @@ export interface Spot {
   status: SpotStatus
   created_at: string
   updated_at: string
+  // 宿泊用拡張フィールド（ALTER TABLE spots ADD COLUMN で追加）
+  price_range?: string | null
+  has_onsen?: boolean | null
+  has_meals?: boolean | null
+  booking_url?: string | null
+  booking_phone?: string | null
+  room_count?: number | null
+  capacity?: number | null
+}
+
+export type EventStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled'
+
+export interface CalendarEvent {
+  id: string
+  title: string
+  description: string | null
+  start_date: string
+  end_date: string | null
+  area: Area | null
+  location: string | null
+  spot_id: string | null
+  image_url: string | null
+  external_url: string | null
+  is_annual: boolean
+  status: EventStatus
+  created_at: string
+  updated_at: string
 }
 
 export type ReviewStatus = 'public' | 'hidden'

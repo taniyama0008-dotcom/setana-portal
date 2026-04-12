@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 const travelLinks = [
   { href: '/travel/gourmet', label: 'グルメ',     sub: '地元食堂・海鮮・カフェ',     accent: '#c47e4f' },
   { href: '/travel/nature',  label: '観光・自然', sub: '絶景・アクティビティ・神社', accent: '#6b8f71' },
+  { href: '/travel/fishing', label: '釣り',       sub: '日本海の磯釣りの聖地',       accent: '#6b8f71' },
   { href: '/travel/onsen',   label: '温泉',       sub: 'くつろぎの日帰り・宿泊湯',   accent: '#5b7e95' },
   { href: '/travel/stay',    label: '泊まる',     sub: 'ホテル・旅館・キャンプ場',   accent: '#3d5a6e' },
   { href: '/travel/access',  label: 'アクセス',   sub: '札幌・函館からの交通案内',   accent: '#8a8a8a' },

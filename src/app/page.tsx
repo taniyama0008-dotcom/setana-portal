@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import SpotCard from '@/components/spot/SpotCard'
-import type { Spot } from '@/lib/types'
+import type { Spot, CalendarEvent } from '@/lib/types'
 
 const travelCards = [
   {
@@ -101,14 +102,29 @@ const placeholderArticles = [
   },
 ]
 
+const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+
 export default async function Home() {
-  const { data: spots } = await supabase
-    .from('spots')
-    .select('*')
-    .eq('status', 'public')
-    .in('section', ['shoku', 'shizen'])
-    .order('created_at', { ascending: false })
-    .limit(6)
+  const today = new Date().toISOString().split('T')[0]
+
+  const [{ data: spots }, { data: upcomingEvents }] = await Promise.all([
+    supabase
+      .from('spots')
+      .select('*')
+      .eq('status', 'public')
+      .in('section', ['shoku', 'shizen'])
+      .order('created_at', { ascending: false })
+      .limit(6),
+    supabaseAdmin
+      .from('events')
+      .select('*')
+      .in('status', ['upcoming', 'ongoing'])
+      .gte('start_date', today)
+      .order('start_date', { ascending: true })
+      .limit(3),
+  ])
+
+  const events = (upcomingEvents ?? []) as CalendarEvent[]
 
   return (
     <>
@@ -260,6 +276,48 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ─── 今月のイベント ─────────────────────────────────── */}
+      {events.length > 0 && (
+        <section className="bg-[#faf8f5] py-16 lg:py-20 px-5 lg:px-8 border-t border-[#efefef]">
+          <div className="max-w-[1120px] mx-auto">
+            <div className="flex items-baseline gap-4 mb-8">
+              <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">EVENTS</p>
+              <div className="flex-1 h-px bg-[#e0e0e0]" />
+              <Link href="/events" className="text-[#8a8a8a] text-[12px] hover:text-[#1a1a1a] transition-colors nav-label">
+                すべて見る →
+              </Link>
+            </div>
+            <h2 className="text-[#1a1a1a] text-[24px] lg:text-[30px] tracking-[0.02em] mb-8" style={{ fontWeight: 300 }}>
+              直近の<span className="font-bold">イベント</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {events.map((event) => {
+                const d = new Date(event.start_date)
+                return (
+                  <Link key={event.id} href="/events" className="group bg-white rounded-[10px] border border-[#efefef] p-5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-shadow">
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0 text-center w-12 bg-[#5b7e95] rounded-[8px] py-2">
+                        <p className="text-[22px] font-bold text-white leading-none tabular-nums">{d.getDate()}</p>
+                        <p className="text-[10px] text-white/70 mt-0.5 nav-label">{MONTH_NAMES[d.getMonth()]}</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {event.status === 'ongoing' && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#f0fdf4] text-[#16a34a] nav-label mb-1.5 inline-block">開催中</span>
+                        )}
+                        <p className="text-[14px] font-semibold text-[#1a1a1a] leading-snug line-clamp-2">{event.title}</p>
+                        {event.location && (
+                          <p className="text-[12px] text-[#8a8a8a] mt-1">📍 {event.location}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─── 今のせたな（新着情報） ─────────────────────────── */}
       <section className="bg-white py-20 lg:py-28 px-5 lg:px-8">
