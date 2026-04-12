@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { SESSION_UID_COOKIE, SESSION_ROLE_COOKIE, COOKIE_OPTIONS } from '@/lib/session'
+import { SESSION_UID_COOKIE, SESSION_ROLE_COOKIE, SESSION_PROVIDER_COOKIE, COOKIE_OPTIONS } from '@/lib/session'
 
 interface LineVerifyResponse {
   iss: string
@@ -18,6 +18,7 @@ interface LineVerifyResponse {
 function setSessionCookies(res: NextResponse, userId: string, role: string) {
   res.cookies.set(SESSION_UID_COOKIE, userId, COOKIE_OPTIONS)
   res.cookies.set(SESSION_ROLE_COOKIE, role, COOKIE_OPTIONS)
+  res.cookies.set(SESSION_PROVIDER_COOKIE, 'line', COOKIE_OPTIONS)
 }
 
 export async function POST(req: NextRequest) {

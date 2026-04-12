@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import Link from 'next/link'
 import { submitReview } from '@/app/actions/review'
 
 interface ReviewFormProps {
@@ -59,6 +60,21 @@ export default function ReviewForm({ spotId, slug, dbNickname }: ReviewFormProps
 
   const isLoggedIn = dbNickname !== undefined
 
+  // 未ログイン時はログインCTAを表示
+  if (!isLoggedIn) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-[14px] text-[#5c5c5c] mb-4">口コミを投稿するにはログインが必要です。</p>
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#c47e4f] hover:bg-[#a5663a] text-white text-[14px] font-medium rounded-[8px] transition-colors"
+        >
+          ログインして口コミを投稿
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="spot_id" value={spotId} />
@@ -90,31 +106,16 @@ export default function ReviewForm({ spotId, slug, dbNickname }: ReviewFormProps
         <label className="block text-[13px] font-medium text-[#5c5c5c] mb-2">
           投稿者 <span className="text-[#d94f4f]">*</span>
         </label>
-
-        {isLoggedIn ? (
-          <div className="flex items-center gap-3 py-2">
-            <div className="w-9 h-9 rounded-full bg-[#e8f0f5] flex items-center justify-center text-[#5b7e95] text-[14px] font-medium shrink-0">
-              {dbNickname!.slice(0, 1)}
-            </div>
-            <div>
-              <p className="text-[14px] font-medium text-[#1a1a1a]">{dbNickname}</p>
-              <p className="text-[11px] text-[#8a8a8a]">
-                マイページから変更できます
-              </p>
-            </div>
-            <input type="hidden" name="nickname" value={dbNickname} />
+        <div className="flex items-center gap-3 py-2">
+          <div className="w-9 h-9 rounded-full bg-[#e8f0f5] flex items-center justify-center text-[#5b7e95] text-[14px] font-medium shrink-0">
+            {dbNickname!.slice(0, 1)}
           </div>
-        ) : (
-          <input
-            id="review-nickname"
-            name="nickname"
-            type="text"
-            required
-            maxLength={30}
-            placeholder="例: 旅好きの田中"
-            className="w-full max-w-xs bg-white border border-[#e0e0e0] rounded-[6px] px-4 py-3 text-[15px] text-[#1a1a1a] focus:outline-none focus:border-[#5b7e95] transition-colors min-h-[48px]"
-          />
-        )}
+          <div>
+            <p className="text-[14px] font-medium text-[#1a1a1a]">{dbNickname}</p>
+            <p className="text-[11px] text-[#8a8a8a]">マイページから変更できます</p>
+          </div>
+          <input type="hidden" name="nickname" value={dbNickname} />
+        </div>
       </div>
 
       {/* 口コミ本文 */}
