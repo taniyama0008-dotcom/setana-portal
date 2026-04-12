@@ -8,8 +8,11 @@ const SUPABASE_URL         = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 // ─── LINE API helpers ────────────────────────────────────────
 
 async function reply(replyToken: string, messages: object[]) {
-  if (!CHANNEL_ACCESS_TOKEN) return
-  await fetch('https://api.line.me/v2/bot/message/reply', {
+  if (!CHANNEL_ACCESS_TOKEN) {
+    console.error('[LINE Reply] CHANNEL_ACCESS_TOKEN is not set')
+    return
+  }
+  const replyRes = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -17,6 +20,8 @@ async function reply(replyToken: string, messages: object[]) {
     },
     body: JSON.stringify({ replyToken, messages }),
   })
+  const replyBody = await replyRes.json()
+  console.log('[LINE Reply] status:', replyRes.status, 'body:', JSON.stringify(replyBody))
 }
 
 async function downloadContent(messageId: string): Promise<ArrayBuffer | null> {
