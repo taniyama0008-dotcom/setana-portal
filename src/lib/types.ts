@@ -47,6 +47,30 @@ export interface ReviewImage {
   alt_text: string | null
 }
 
+export type HousingSupport = 'provided' | 'subsidized' | 'none'
+export type KyoryokutaiStatus = 'draft' | 'published'
+
+export interface KyoryokutaiListing {
+  id: string
+  user_id: string
+  slug: string
+  title: string
+  catchphrase: string | null
+  description: string | null
+  duties: string | null
+  salary_benefits: string | null
+  housing_support: HousingSupport
+  latitude: number | null
+  longitude: number | null
+  contact_info: string | null
+  application_url: string | null
+  photos: string[]
+  status: KyoryokutaiStatus
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Article {
   id: string
   title: string

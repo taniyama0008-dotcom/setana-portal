@@ -20,11 +20,17 @@ const typeColor: Record<string, string> = {
 }
 
 export default async function WorkPage() {
-  const { data: jobs } = await supabaseAdmin
-    .from('jobs')
-    .select('*, spots(name)')
-    .eq('status', 'open')
-    .order('created_at', { ascending: false })
+  const [{ data: jobs }, { count: kyoryokutaiCount }] = await Promise.all([
+    supabaseAdmin
+      .from('jobs')
+      .select('*, spots(name)')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('kyoryokutai_listings')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published'),
+  ])
 
   const list = jobs ?? []
 
@@ -71,6 +77,22 @@ export default async function WorkPage() {
       </section>
 
       <div className="max-w-[860px] mx-auto px-5 lg:px-8 py-16 lg:py-24">
+        {/* 協力隊バナー */}
+        {(kyoryokutaiCount ?? 0) > 0 && (
+          <div className="mb-10 flex items-center justify-between gap-4 bg-[#f0f5f0] border border-[#6b8f71]/30 rounded-[10px] px-5 py-4">
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.15em] text-[#6b8f71] mb-1 nav-label">COMMUNITY SUPPORTER</p>
+              <p className="text-[14px] font-bold text-[#1a1a1a]">地域おこし協力隊の詳しい情報はこちら</p>
+            </div>
+            <Link
+              href="/kyoryokutai"
+              className="shrink-0 px-4 py-2 bg-[#6b8f71] hover:bg-[#4a6b50] text-white text-[13px] font-medium rounded-[8px] transition-colors nav-label"
+            >
+              募集一覧 →
+            </Link>
+          </div>
+        )}
+
         {/* 求人タイプ凡例 */}
         <div className="flex flex-wrap gap-3 mb-10">
           {Object.entries(typeLabel).map(([key, label]) => (

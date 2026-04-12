@@ -10,6 +10,7 @@ const travelLinks = [
 
 const lifeLinks = [
   { href: '/life/work',      label: 'しごと・求人' },
+  { href: '/kyoryokutai',    label: '地域おこし協力隊' },
   { href: '/life/living',    label: '暮らしのリアル' },
   { href: '/life/migration', label: '移住支援' },
 ]

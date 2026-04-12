@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const tabs = [
-  { href: '/business',         label: 'ダッシュボード' },
-  { href: '/business/jobs',    label: '求人管理' },
-  { href: '/business/reviews', label: '口コミ・返信' },
+  { href: '/business',              label: 'ダッシュボード' },
+  { href: '/business/jobs',         label: '求人管理' },
+  { href: '/business/kyoryokutai',  label: '協力隊LP' },
+  { href: '/business/reviews',      label: '口コミ・返信' },
 ]
 
 export default function BusinessNav() {

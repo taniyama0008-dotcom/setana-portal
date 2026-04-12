@@ -13,9 +13,10 @@ const travelLinks = [
 ]
 
 const lifeLinks = [
-  { href: '/life/work',      label: 'しごと',       sub: '求人・協力隊・農林漁業', accent: '#c47e4f' },
-  { href: '/life/living',    label: '暮らしのリアル', sub: '生活・医療・買い物・教育', accent: '#5b7e95' },
-  { href: '/life/migration', label: '移住支援',     sub: '補助金・体験住宅・相談窓口', accent: '#6b8f71' },
+  { href: '/life/work',      label: 'しごと',         sub: '求人・協力隊・農林漁業',   accent: '#c47e4f' },
+  { href: '/kyoryokutai',    label: '地域おこし協力隊', sub: '都市から地方へ。1〜3年の挑戦', accent: '#6b8f71' },
+  { href: '/life/living',    label: '暮らしのリアル',  sub: '生活・医療・買い物・教育', accent: '#5b7e95' },
+  { href: '/life/migration', label: '移住支援',       sub: '補助金・体験住宅・相談窓口', accent: '#3d5a6e' },
 ]
 
 function DropdownMenu({
