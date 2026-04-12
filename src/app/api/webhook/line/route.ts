@@ -3,7 +3,6 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 const CHANNEL_SECRET      = process.env.LINE_MESSAGING_CHANNEL_SECRET ?? ''
 const CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN ?? ''
-const SUPABASE_URL         = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
 // ─── LINE API helpers ────────────────────────────────────────
 
@@ -24,15 +23,11 @@ async function reply(replyToken: string, messages: object[]) {
   console.log('[LINE Reply] status:', replyRes.status, 'body:', JSON.stringify(replyBody))
 }
 
-async function downloadContent(messageId: string): Promise<ArrayBuffer | null> {
-  if (!CHANNEL_ACCESS_TOKEN) return null
-  const res = await fetch(
-    `https://api-data.line.me/v2/bot/message/${messageId}/content`,
-    { headers: { Authorization: `Bearer ${CHANNEL_ACCESS_TOKEN}` } },
-  )
-  if (!res.ok) return null
-  return res.arrayBuffer()
-}
+
+// LINE Content API: 管理画面表示用（webhook処理では使わない）
+// GET https://api-data.line.me/v2/bot/message/{messageId}/content
+// Authorization: Bearer {CHANNEL_ACCESS_TOKEN}
+// photo_url = "line://{messageId}" で保存し、表示時にこのURLから取得する
 
 // ─── HMAC-SHA256 署名検証 ────────────────────────────────────
 
@@ -71,94 +66,174 @@ interface SessionContext {
 }
 
 async function getSession(lineUserId: string): Promise<{ state: SessionState; context: SessionContext }> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('line_sessions')
     .select('state, context')
     .eq('line_user_id', lineUserId)
     .maybeSingle()
-  return { state: (data?.state as SessionState) ?? 'idle', context: (data?.context as SessionContext) ?? {} }
+  if (error) console.error('[LINE Session] getSession error:', error.message, error.code)
+  const state   = (data?.state as SessionState) ?? 'idle'
+  const context = (data?.context as SessionContext) ?? {}
+  console.log('[LINE Session] get:', lineUserId.slice(-6), '→ state:', state, 'context:', JSON.stringify(context))
+  return { state, context }
 }
 
 async function setSession(lineUserId: string, state: SessionState, context: SessionContext) {
-  await supabaseAdmin
+  console.log('[LINE Session] set:', lineUserId.slice(-6), '→ state:', state, 'context:', JSON.stringify(context))
+  const { error } = await supabaseAdmin
     .from('line_sessions')
-    .upsert({ line_user_id: lineUserId, state, context, updated_at: new Date().toISOString() })
+    .upsert(
+      { line_user_id: lineUserId, state, context, updated_at: new Date().toISOString() },
+      { onConflict: 'line_user_id' },
+    )
+  if (error) console.error('[LINE Session] setSession error:', error.message, error.code)
 }
 
 async function clearSession(lineUserId: string) {
   await setSession(lineUserId, 'idle', {})
 }
 
+// ─── LINE ユーザー取得 or 自動作成 ───────────────────────────
+
+interface LineUserRecord {
+  id: string
+  coin_balance: number
+  nickname: string | null
+  line_display_name: string | null
+}
+
+async function getOrCreateLineUser(lineUserId: string): Promise<LineUserRecord | null> {
+  // 既存ユーザーを検索
+  const { data: existing, error: lookupErr } = await supabaseAdmin
+    .from('users')
+    .select('id, coin_balance, nickname, line_display_name')
+    .eq('line_user_id', lineUserId)
+    .maybeSingle()
+  if (lookupErr) console.error('[LINE User] lookup error:', lookupErr.message, lookupErr.code)
+  if (existing) {
+    console.log('[LINE User] found existing user:', existing.id)
+    return existing
+  }
+
+  // LINE Profile API でプロフィール取得
+  let displayName = 'LINEユーザー'
+  let pictureUrl: string | null = null
+  if (CHANNEL_ACCESS_TOKEN) {
+    const profileRes = await fetch(`https://api.line.me/v2/bot/profile/${lineUserId}`, {
+      headers: { Authorization: `Bearer ${CHANNEL_ACCESS_TOKEN}` },
+    })
+    if (profileRes.ok) {
+      const profile = await profileRes.json() as { displayName?: string; pictureUrl?: string }
+      displayName = profile.displayName ?? displayName
+      pictureUrl  = profile.pictureUrl  ?? null
+      console.log('[LINE User] fetched profile:', displayName)
+    } else {
+      console.warn('[LINE User] profile API status:', profileRes.status)
+    }
+  }
+
+  // users テーブルに新規作成
+  const { data: created, error: createErr } = await supabaseAdmin
+    .from('users')
+    .insert({
+      line_user_id:      lineUserId,
+      line_display_name: displayName,
+      line_picture_url:  pictureUrl,
+      role:              'user',
+      coin_balance:      0,
+    })
+    .select('id, coin_balance, nickname, line_display_name')
+    .single()
+
+  if (createErr) {
+    console.error('[LINE User] create error:', createErr.message, createErr.code, createErr.details)
+    return null
+  }
+  console.log('[LINE User] created new user:', created.id, displayName)
+  return created
+}
+
 // ─── コイン付与 ──────────────────────────────────────────────
 
 async function awardCoins(
-  lineUserId: string,
+  user: LineUserRecord,
   amount: number,
   reason: string,
   referenceId: string,
 ): Promise<number> {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('id, coin_balance')
-    .eq('line_user_id', lineUserId)
-    .maybeSingle()
-  if (!user) return 0
-
   const newBalance = (user.coin_balance ?? 0) + amount
-  await Promise.all([
+  console.log('[LINE Coins] awarding', amount, 'coins to user', user.id, '| reason:', reason, '| new balance:', newBalance)
+
+  const [{ error: txErr }, { error: balanceErr }] = await Promise.all([
     supabaseAdmin.from('coin_transactions').insert({
-      user_id: user.id,
+      user_id:      user.id,
       amount,
       reason,
       reference_id: referenceId,
     }),
     supabaseAdmin.from('users').update({ coin_balance: newBalance }).eq('id', user.id),
   ])
+  if (txErr)      console.error('[LINE Coins] coin_transactions insert error:', txErr.message, txErr.code, txErr.details)
+  if (balanceErr) console.error('[LINE Coins] coin_balance update error:', balanceErr.message, balanceErr.code)
   return newBalance
 }
 
 // ─── レポート保存 ────────────────────────────────────────────
 
+function fallbackReportNumber(): string {
+  const d = new Date()
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+  const rand = Math.floor(Math.random() * 900 + 100)
+  return `R-${ymd}-${rand}`
+}
+
 async function saveReport(lineUserId: string, ctx: SessionContext): Promise<{ reportNumber: string; coins: number }> {
   const reportType = ctx.report_type ?? 'realtime_info'
 
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('id, nickname, line_display_name')
-    .eq('line_user_id', lineUserId)
-    .maybeSingle()
+  // ユーザー取得 or 自動作成（サイトLINEログイン未登録でもコイン付与可能に）
+  const user = await getOrCreateLineUser(lineUserId)
+  console.log('[LINE Report] inserting report | type:', reportType, 'category:', ctx.category ?? 'other', 'user:', user?.id ?? 'anonymous')
 
-  const { data: inserted } = await supabaseAdmin
+  const { data: inserted, error: insertErr } = await supabaseAdmin
     .from('reports')
     .insert({
-      user_id:      user?.id ?? null,
-      line_user_id: lineUserId,
+      user_id:       user?.id ?? null,
+      line_user_id:  lineUserId,
       reporter_name: user ? (user.nickname ?? user.line_display_name) : null,
-      category:     ctx.category ?? 'other',
-      report_type:  reportType,
-      description:  ctx.description ?? null,
-      spot_id:      ctx.spot_id ?? null,
-      spot_name:    ctx.spot_name ?? null,
-      photo_url:    ctx.photo_url ?? null,
-      latitude:     ctx.latitude ?? null,
-      longitude:    ctx.longitude ?? null,
-      status:       'received',
+      category:      ctx.category ?? 'other',
+      report_type:   reportType,
+      description:   ctx.description ?? null,
+      spot_id:       ctx.spot_id ?? null,
+      spot_name:     ctx.spot_name ?? null,
+      photo_url:     ctx.photo_url ?? null,
+      latitude:      ctx.latitude ?? null,
+      longitude:     ctx.longitude ?? null,
+      status:        'received',
     })
     .select('id, report_number')
     .single()
 
-  if (!inserted) return { reportNumber: '—', coins: 0 }
+  if (insertErr) console.error('[LINE Report] insert error:', insertErr.message, insertErr.code, insertErr.details)
+  if (!inserted) {
+    console.error('[LINE Report] inserted is null — returning fallback')
+    return { reportNumber: fallbackReportNumber(), coins: 0 }
+  }
 
-  // コイン付与
+  // トリガーが空文字を返した場合のフォールバック
+  const reportNumber = inserted.report_number || fallbackReportNumber()
+  console.log('[LINE Report] saved | id:', inserted.id, 'report_number:', reportNumber)
+
+  // コイン付与（ユーザーが取得 or 作成できた場合のみ）
   let coinAmount = reportType === 'infrastructure' ? 10 : 3
   if (ctx.photo_url) coinAmount += 2
+  const reason = reportType === 'infrastructure' ? 'report_infra' : 'report_info'
 
-  const reason  = reportType === 'infrastructure' ? 'report_infra' : 'report_info'
-  let newBalance = 0
   if (user) {
-    newBalance = await awardCoins(lineUserId, coinAmount, reason, inserted.id)
-    // 写真ボーナス別途記録は上の合算でOK（specに合わせてphoto_bonusは独立しても可）
+    await awardCoins(user, coinAmount, reason, inserted.id)
     await supabaseAdmin.from('reports').update({ coins_awarded: coinAmount }).eq('id', inserted.id)
+  } else {
+    console.warn('[LINE Report] user is null — skipping coin award')
+    coinAmount = 0
   }
 
   // インフラ通報は担当部署へメール転送（環境変数があれば）
@@ -166,7 +241,7 @@ async function saveReport(lineUserId: string, ctx: SessionContext): Promise<{ re
     await forwardByEmail(inserted.id, ctx)
   }
 
-  return { reportNumber: inserted.report_number, coins: coinAmount }
+  return { reportNumber: reportNumber, coins: coinAmount }
 }
 
 // ─── メール転送（Phase1: 環境変数なければスキップ） ──────────
@@ -210,20 +285,6 @@ async function forwardByEmail(reportId: string, ctx: SessionContext) {
   }).eq('id', reportId)
 }
 
-// ─── 写真アップロード ─────────────────────────────────────────
-
-async function uploadPhoto(messageId: string, lineUserId: string): Promise<string | null> {
-  const buf = await downloadContent(messageId)
-  if (!buf) return null
-
-  const path = `${lineUserId}/${Date.now()}.jpg`
-  const { error } = await supabaseAdmin.storage
-    .from('reports')
-    .upload(path, buf, { contentType: 'image/jpeg', upsert: true })
-
-  if (error) { console.error('[webhook] upload error', error); return null }
-  return `${SUPABASE_URL}/storage/v1/object/public/reports/${path}`
-}
 
 // ─── クイックリプライ構築ユーティリティ ──────────────────────
 
@@ -314,7 +375,13 @@ async function handleEvent(event: Record<string, unknown>) {
   if (!lineUserId) return
 
   const replyToken = event.replyToken as string
+  const msg = event.message as Record<string, unknown> | undefined
+  console.log('[LINE Event] type:', event.type, 'userId:', lineUserId.slice(-6),
+    msg ? `msgType:${msg.type} text:${msg.text ?? ''}` : '',
+    event.type === 'postback' ? `data:${(event.postback as Record<string,string>)?.data}` : '')
+
   const { state, context } = await getSession(lineUserId)
+  console.log('[LINE Bot] current state:', state, '| event:', event.type)
 
   if (event.type === 'follow') {
     await clearSession(lineUserId)
@@ -339,9 +406,30 @@ async function handleEvent(event: Record<string, unknown>) {
     } else if (msg.type === 'text') {
       await handleText(lineUserId, replyToken, state, context, msg.text)
     } else {
-      await reply(replyToken, [{ type: 'text', text: 'テキストまたは写真で送ってください。' }])
+      // スタンプ・音声など非対応メッセージ → stateに関わらずリセット
+      console.log('[LINE Bot] unsupported message type:', msg.type, '| state:', state)
+      await resetWithGuide(lineUserId, replyToken, `unsupported msg type:${msg.type}`)
     }
   }
+}
+
+// ─── リセットキーワード判定 ─────────────────────────────────
+
+const RESET_PATTERN = /通報|報告|つうほう|ほうこく|リセット|やり直|最初から|はじめから/
+
+async function resetAndStart(lineUserId: string, replyToken: string) {
+  console.log('[LINE Bot] RESET triggered — clearing session and starting report flow')
+  await clearSession(lineUserId)
+  await handleStartReport(lineUserId, replyToken)
+}
+
+async function resetWithGuide(lineUserId: string, replyToken: string, reason: string) {
+  console.log('[LINE Bot] unexpected input (', reason, ') — resetting session to idle')
+  await clearSession(lineUserId)
+  await reply(replyToken, [
+    qrText('入力をリセットしました。「通報」と送ってやり直してください。',
+      [pb('通報・情報を送る', 'report_start', '通報')]),
+  ])
 }
 
 // ─── テキストメッセージ処理 ──────────────────────────────────
@@ -351,13 +439,20 @@ async function handleText(
   state: SessionState, context: SessionContext, text: string,
 ) {
   const t = text.trim()
+  console.log('[LINE Bot] handleText | state:', state, 'text:', t)
+
+  // リセットキーワードは state に関わらず最優先でリセット
+  if (RESET_PATTERN.test(t)) {
+    await resetAndStart(lineUserId, replyToken)
+    return
+  }
 
   if (state === 'idle') {
-    if (/通報|報告|つうほう|ほうこく/.test(t)) {
-      await handleStartReport(lineUserId, replyToken)
-    } else if (/コイン|残高/.test(t)) {
+    if (/コイン|残高/.test(t)) {
+      console.log('[LINE Bot] handling: coin_balance')
       await handleCoinBalance(lineUserId, replyToken)
     } else {
+      console.log('[LINE Bot] idle: unrecognized text, sending prompt')
       await reply(replyToken, [
         qrText('「通報」または「報告」と送ると情報を受け付けます。',
           [pb('通報・情報を送る', 'report_start', '通報')]),
@@ -367,11 +462,13 @@ async function handleText(
   }
 
   if (state === 'shop_select') {
+    console.log('[LINE Bot] transitioning to: shop_search with query:', t)
     await handleShopSearch(lineUserId, replyToken, context, t)
     return
   }
 
   if (state === 'description_request' || state === 'weather_input' || state === 'other_input') {
+    console.log('[LINE Bot] transitioning to: photo_optional | description:', t)
     const newCtx = { ...context, description: t }
     await setSession(lineUserId, 'photo_optional', newCtx)
     await reply(replyToken, [
@@ -383,40 +480,59 @@ async function handleText(
 
   if (state === 'photo_request') {
     if (/なし|skip|スキップ/i.test(t)) {
+      console.log('[LINE Bot] transitioning to: location_request (photo skipped via text)')
       await setSession(lineUserId, 'location_request', context)
       await reply(replyToken, [
         qrText('現在地を送ってください。位置情報ボタンを押すか、「なし」と入力してください。',
           [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
       ])
     } else {
-      await reply(replyToken, [{ type: 'text', text: '写真を送ってください。スキップする場合は「なし」と入力してください。' }])
+      // photo_request で想定外テキスト → 再案内（リセットはしない）
+      console.log('[LINE Bot] photo_request: non-skip text received, re-prompting')
+      await reply(replyToken, [
+        qrText('写真を送ってください。スキップする場合は下のボタンを押してください。',
+          [pb('スキップ', 'skip_photo', 'スキップ（写真なし）')]),
+      ])
     }
     return
   }
 
   if (state === 'photo_optional') {
     if (/なし|skip|スキップ/i.test(t)) {
+      console.log('[LINE Bot] transitioning to: confirm (photo skipped, photo_optional)')
       const newCtx = { ...context, photo_url: null }
       await setSession(lineUserId, 'confirm', newCtx)
       await reply(replyToken, [buildConfirmFlex(newCtx)])
     } else {
-      await reply(replyToken, [{ type: 'text', text: '写真を送るか「なし」と入力してください。' }])
+      // photo_optional で想定外テキスト → 再案内（リセットはしない）
+      console.log('[LINE Bot] photo_optional: non-skip text received, re-prompting')
+      await reply(replyToken, [
+        qrText('写真を送るか、スキップしてください。',
+          [pb('なし（写真なし）', 'skip_photo', 'なし（写真なし）')]),
+      ])
     }
     return
   }
 
   if (state === 'location_request') {
     if (/なし|skip|スキップ/i.test(t)) {
+      console.log('[LINE Bot] transitioning to: confirm (location skipped via text)')
       await setSession(lineUserId, 'confirm', context)
       await reply(replyToken, [buildConfirmFlex(context)])
     } else {
-      await reply(replyToken, [{ type: 'text', text: '位置情報ボタンで場所を送るか「なし」と入力してください。' }])
+      // location_request で想定外テキスト → 再案内（リセットはしない）
+      console.log('[LINE Bot] location_request: non-skip text received, re-prompting')
+      await reply(replyToken, [
+        qrText('位置情報ボタンで場所を送るか、スキップしてください。',
+          [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
+      ])
     }
     return
   }
 
-  // 他の state でのテキストは汎用メッセージ
-  await reply(replyToken, [{ type: 'text', text: 'ボタンから選んでください。最初からやり直す場合は「通報」と送ってください。' }])
+  // select_type / infra_category / shop_status / confirm など、
+  // テキスト入力が想定されない state → リセットして案内
+  await resetWithGuide(lineUserId, replyToken, `unexpected text in state:${state}`)
 }
 
 // ─── ポストバック処理 ────────────────────────────────────────
@@ -425,15 +541,25 @@ async function handlePostback(
   lineUserId: string, replyToken: string,
   state: SessionState, context: SessionContext, data: string,
 ) {
+  console.log('[LINE Bot] handlePostback | state:', state, 'data:', data)
+
   if (data === 'report_start' || data === 'coin_balance') {
-    if (data === 'coin_balance') { await handleCoinBalance(lineUserId, replyToken); return }
+    if (data === 'coin_balance') {
+      console.log('[LINE Bot] handling: coin_balance')
+      await handleCoinBalance(lineUserId, replyToken)
+      return
+    }
+    console.log('[LINE Bot] transitioning to: select_type (via handleStartReport)')
     await handleStartReport(lineUserId, replyToken)
     return
   }
 
   if (data === 'confirm_submit') {
+    console.log('[LINE Bot] confirm_submit: saving report, context:', JSON.stringify(context))
     const { reportNumber, coins } = await saveReport(lineUserId, context)
+    console.log('[LINE Bot] report saved | reportNumber:', reportNumber, 'coins:', coins)
     await clearSession(lineUserId)
+    console.log('[LINE Bot] transitioning to: idle (after submit)')
     const typeLabel = context.report_type === 'infrastructure'
       ? '通報を受け付けました。担当部署に転送済みです。'
       : '情報をありがとうございます！確認後に公開されます。'
@@ -447,6 +573,7 @@ async function handlePostback(
   }
 
   if (data === 'confirm_cancel') {
+    console.log('[LINE Bot] transitioning to: idle (confirm cancelled)')
     await clearSession(lineUserId)
     await reply(replyToken, [{ type: 'text', text: 'キャンセルしました。また「通報」と送ってください。' }])
     return
@@ -454,12 +581,14 @@ async function handlePostback(
 
   if (data === 'skip_photo') {
     if (state === 'photo_request') {
+      console.log('[LINE Bot] transitioning to: location_request (photo skipped via postback)')
       await setSession(lineUserId, 'location_request', context)
       await reply(replyToken, [
         qrText('現在地を送ってください。',
           [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
       ])
     } else {
+      console.log('[LINE Bot] transitioning to: confirm (photo skipped, state:', state, ')')
       const newCtx = { ...context, photo_url: null }
       await setSession(lineUserId, 'confirm', newCtx)
       await reply(replyToken, [buildConfirmFlex(newCtx)])
@@ -468,6 +597,7 @@ async function handlePostback(
   }
 
   if (data === 'skip_location') {
+    console.log('[LINE Bot] transitioning to: confirm (location skipped via postback)')
     await setSession(lineUserId, 'confirm', context)
     await reply(replyToken, [buildConfirmFlex(context)])
     return
@@ -476,6 +606,7 @@ async function handlePostback(
   // ─ select_type ─
   if (state === 'select_type') {
     if (data === 'type_infra') {
+      console.log('[LINE Bot] transitioning to: infra_category')
       await setSession(lineUserId, 'infra_category', { report_type: 'infrastructure' })
       await reply(replyToken, [
         qrText('どんな問題ですか？',
@@ -483,46 +614,59 @@ async function handlePostback(
            pb('公園・遊具', 'cat_park'), pb('除雪', 'cat_snow'), pb('その他', 'cat_other')]),
       ])
     } else if (data === 'type_shop') {
+      console.log('[LINE Bot] transitioning to: shop_select')
       await setSession(lineUserId, 'shop_select', { report_type: 'realtime_info' })
       await reply(replyToken, [{ type: 'text', text: 'お店の名前を教えてください。' }])
     } else if (data === 'type_weather') {
+      console.log('[LINE Bot] transitioning to: weather_input')
       await setSession(lineUserId, 'weather_input', { report_type: 'realtime_info', category: 'weather' })
       await reply(replyToken, [{ type: 'text', text: '道路・天候の状況を教えてください。' }])
     } else if (data === 'type_other') {
+      console.log('[LINE Bot] transitioning to: other_input')
       await setSession(lineUserId, 'other_input', { report_type: 'realtime_info', category: 'other_info' })
       await reply(replyToken, [{ type: 'text', text: '情報の内容を教えてください。' }])
+    } else {
+      console.log('[LINE Bot] select_type: unrecognized data:', data)
     }
     return
   }
 
   // ─ infra_category ─
   if (state === 'infra_category') {
+    console.log('[LINE Bot] infra_category: received data:', data)
     const catMap: Record<string, string> = {
       cat_road: 'road', cat_streetlight: 'streetlight', cat_park: 'park', cat_snow: 'snow', cat_other: 'other',
     }
     const category = catMap[data]
     if (category) {
+      console.log('[LINE Bot] transitioning to: photo_request | category:', category)
       const newCtx = { ...context, category }
       await setSession(lineUserId, 'photo_request', newCtx)
       await reply(replyToken, [
         qrText('写真を送ってください（任意）。',
           [pb('スキップ', 'skip_photo', 'スキップ（写真なし）')]),
       ])
+    } else {
+      console.log('[LINE Bot] infra_category: unknown data, no catMap match for:', data)
     }
     return
   }
 
   // ─ shop_status ─
   if (state === 'shop_status') {
+    console.log('[LINE Bot] shop_status: received data:', data)
     const catMap: Record<string, string> = {
       shop_closed: 'shop_closed', shop_hours: 'shop_hours',
       shop_crowded: 'shop_crowded', shop_other: 'other_info',
     }
     const category = catMap[data]
     if (category) {
+      console.log('[LINE Bot] transitioning to: description_request | category:', category)
       const newCtx = { ...context, category }
       await setSession(lineUserId, 'description_request', newCtx)
       await reply(replyToken, [{ type: 'text', text: '詳しい状況を教えてください。' }])
+    } else {
+      console.log('[LINE Bot] shop_status: unknown data, no catMap match for:', data)
     }
     return
   }
@@ -532,6 +676,7 @@ async function handlePostback(
     if (data.startsWith('shop_confirm:')) {
       const spotId = data.split(':')[1]
       const spotName = data.split(':')[2] ?? ''
+      console.log('[LINE Bot] transitioning to: shop_status | spot:', spotId, spotName)
       const newCtx = { ...context, spot_id: spotId, spot_name: spotName }
       await setSession(lineUserId, 'shop_status', newCtx)
       await reply(replyToken, [
@@ -540,32 +685,43 @@ async function handlePostback(
            pb('混雑している', 'shop_crowded'), pb('その他', 'shop_other')]),
       ])
     } else if (data === 'shop_other_name') {
+      console.log('[LINE Bot] shop_select: re-prompting shop name entry')
       // すでにshop_selectに戻る → テキスト待ち
       await reply(replyToken, [{ type: 'text', text: 'もう一度お店の名前を入力してください。' }])
+    } else {
+      console.log('[LINE Bot] shop_select: unrecognized data:', data)
     }
     return
   }
+
+  // 想定外の state/data → リセットして案内
+  await resetWithGuide(lineUserId, replyToken, `unhandled postback state:${state} data:${data}`)
 }
 
 // ─── 画像メッセージ処理 ──────────────────────────────────────
+// 外部APIコールなし: messageId を "line://{id}" として context に保存するのみ
+// 実際の画像取得は管理画面表示時または非同期バッチで行う
 
 async function handleImage(
   lineUserId: string, replyToken: string,
   state: SessionState, context: SessionContext, messageId: string,
 ) {
   if (state === 'photo_request' || state === 'photo_optional') {
-    await reply(replyToken, [{ type: 'text', text: '写真をアップロード中...' }])
-    const photoUrl = await uploadPhoto(messageId, lineUserId)
-    const newCtx = { ...context, photo_url: photoUrl }
+    console.log('[LINE Bot] handleImage | state:', state, 'messageId:', messageId)
+    // アップロードせず messageId を参照IDとして保存
+    const newCtx = { ...context, photo_url: `line://${messageId}` }
 
     if (state === 'photo_request') {
       await setSession(lineUserId, 'location_request', newCtx)
+      console.log('[LINE Bot] transitioning to: location_request (photo ref saved)')
       await reply(replyToken, [
-        qrText('位置情報を送ってください（任意）。',
+        qrText('📷 写真を受け取りました！\n現在地を送ってください（任意）。',
           [pb('なし（場所なし）', 'skip_location', 'なし（場所なし）')]),
       ])
     } else {
+      // photo_optional
       await setSession(lineUserId, 'confirm', newCtx)
+      console.log('[LINE Bot] transitioning to: confirm (photo ref saved, photo_optional)')
       await reply(replyToken, [buildConfirmFlex(newCtx)])
     }
   } else if (state === 'idle') {
@@ -574,7 +730,8 @@ async function handleImage(
         [pb('通報・情報を送る', 'report_start', '通報する')]),
     ])
   } else {
-    await reply(replyToken, [{ type: 'text', text: '写真を送るタイミングが違います。「通報」と送ってやり直してください。' }])
+    // 想定外の state で画像 → リセットして案内
+    await resetWithGuide(lineUserId, replyToken, `unexpected image in state:${state}`)
   }
 }
 
@@ -591,7 +748,8 @@ async function handleLocation(
     await setSession(lineUserId, 'confirm', newCtx)
     await reply(replyToken, [buildConfirmFlex(newCtx)])
   } else {
-    await reply(replyToken, [{ type: 'text', text: 'ボタンから選んでください。' }])
+    // 想定外の state で位置情報 → リセットして案内
+    await resetWithGuide(lineUserId, replyToken, `unexpected location in state:${state}`)
   }
 }
 
@@ -646,12 +804,7 @@ async function handleStartReport(lineUserId: string, replyToken: string) {
 // ─── コイン残高確認 ──────────────────────────────────────────
 
 async function handleCoinBalance(lineUserId: string, replyToken: string) {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('coin_balance')
-    .eq('line_user_id', lineUserId)
-    .maybeSingle()
-
+  const user = await getOrCreateLineUser(lineUserId)
   const balance = user?.coin_balance ?? 0
   await reply(replyToken, [{
     type: 'text',

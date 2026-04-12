@@ -104,8 +104,15 @@ function ReportModal({ report, onClose, onUpdate }: {
           {report.photo_url && (
             <section>
               <p className="text-[11px] font-medium text-[#8a8a8a] tracking-[0.1em] mb-2">写真</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={report.photo_url} alt="通報写真" className="w-full rounded-[8px] border border-[#efefef]" />
+              {report.photo_url.startsWith('line://') ? (
+                <div className="text-[12px] text-[#5b7e95] bg-[#f0f5f8] rounded-[6px] px-3 py-2">
+                  <p>📷 LINE画像参照 (ID: {report.photo_url.replace('line://', '')})</p>
+                  <p className="text-[11px] text-[#8a8a8a] mt-1">LINE Content APIから取得可能（30日間有効）</p>
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={report.photo_url} alt="通報写真" className="w-full rounded-[8px] border border-[#efefef]" />
+              )}
             </section>
           )}
 
