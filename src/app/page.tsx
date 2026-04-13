@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -151,13 +152,15 @@ export default async function Home() {
 
       {/* ─── ヒーロー ──────────────────────────────────────── */}
       <section className="relative h-[75vh] min-h-[520px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a35] via-[#2d4a5e] to-[#3d5c42]" />
-        {/* 波紋テクスチャ */}
-        <div className="absolute inset-0 opacity-[0.06]" style={{
-          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.5) 39px, rgba(255,255,255,0.5) 40px),
-                            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.5) 39px, rgba(255,255,255,0.5) 40px)`,
-        }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[#1a2a35]" />
+        <Image
+          src="/images/hero.jpg"
+          alt="北海道せたな町の風景"
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-16 lg:pb-24">
           <p className="text-white/50 text-[11px] font-medium tracking-[0.25em] mb-5 nav-label">
             HOKKAIDO / SETANA-CHO
