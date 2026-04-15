@@ -125,7 +125,16 @@ export default function SpotEditForm({ spot }: { spot: Spot }) {
 
           <div>
             <label className={labelClass}>カテゴリ</label>
-            <input name="category" defaultValue={spot.category} placeholder="restaurant / nature / fishing 等" className={inputClass} />
+            <select name="category" defaultValue={spot.category ?? ''} className={inputClass}>
+              <option value="">未設定</option>
+              <option value="gourmet">グルメ・飲食</option>
+              <option value="nature">観光・自然</option>
+              <option value="onsen">温泉</option>
+              <option value="stay">宿泊</option>
+              <option value="activity">遊ぶ・体験</option>
+              <option value="shop">買い物</option>
+              <option value="facility">公共施設</option>
+            </select>
           </div>
 
           <div>
