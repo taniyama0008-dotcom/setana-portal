@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 const baseUrl = 'https://www.setana.life'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ data: spots }, { data: kyoryokutai }] = await Promise.all([
+  const [{ data: spots }, { data: kyoryokutai }, { data: articles }] = await Promise.all([
     supabase
       .from('spots')
       .select('slug, created_at, updated_at')
@@ -13,6 +13,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('kyoryokutai_listings')
       .select('slug, published_at, updated_at')
       .eq('status', 'published'),
+    supabase
+      .from('articles')
+      .select('slug, created_at, updated_at')
+      .eq('status', 'public'),
   ])
 
   const spotEntries: MetadataRoute.Sitemap = (spots ?? []).map((spot) => ({
@@ -20,6 +24,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(spot.updated_at ?? spot.created_at),
     changeFrequency: 'monthly',
     priority: 0.6,
+  }))
+
+  const articleEntries: MetadataRoute.Sitemap = (articles ?? []).map((a) => ({
+    url: `${baseUrl}/article/${a.slug}`,
+    lastModified: new Date(a.updated_at ?? a.created_at),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
   }))
 
   const kyoryokutaiEntries: MetadataRoute.Sitemap = (kyoryokutai ?? []).map((k) => ({
@@ -49,6 +60,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/life/work`,       lastModified: new Date(), changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${baseUrl}/life/living`,     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/life/migration`,  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+
+    // 記事
+    ...articleEntries,
 
     // 協力隊
     { url: `${baseUrl}/kyoryokutai`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },

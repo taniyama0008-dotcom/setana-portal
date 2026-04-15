@@ -75,6 +75,70 @@ export async function deleteArticle(articleId: string) {
   return { success: true }
 }
 
+// ── スポット画像 ──────────────────────────────────────────
+export async function addSpotImage(spotId: string, imageUrl: string, altText: string) {
+  await assertAdmin()
+  const { data: last } = await supabaseAdmin
+    .from('spot_images')
+    .select('sort_order')
+    .eq('spot_id', spotId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .single()
+  const nextOrder = last ? (last.sort_order ?? 0) + 1 : 0
+  await supabaseAdmin.from('spot_images').insert({
+    spot_id: spotId,
+    image_url: imageUrl,
+    alt_text: altText || null,
+    sort_order: nextOrder,
+  })
+  revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
+export async function deleteSpotImage(imageId: string, spotId: string) {
+  await assertAdmin()
+  await supabaseAdmin.from('spot_images').delete().eq('id', imageId)
+  revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
+export async function moveSpotImageUp(imageId: string, spotId: string) {
+  await assertAdmin()
+  const { data: all } = await supabaseAdmin
+    .from('spot_images')
+    .select('id, sort_order')
+    .eq('spot_id', spotId)
+    .order('sort_order', { ascending: true })
+  if (!all) return { success: false }
+  const idx = all.findIndex((r: { id: string }) => r.id === imageId)
+  if (idx <= 0) return { success: false }
+  const prev = all[idx - 1]
+  const cur = all[idx]
+  await supabaseAdmin.from('spot_images').update({ sort_order: prev.sort_order }).eq('id', cur.id)
+  await supabaseAdmin.from('spot_images').update({ sort_order: cur.sort_order }).eq('id', prev.id)
+  revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
+export async function moveSpotImageDown(imageId: string, spotId: string) {
+  await assertAdmin()
+  const { data: all } = await supabaseAdmin
+    .from('spot_images')
+    .select('id, sort_order')
+    .eq('spot_id', spotId)
+    .order('sort_order', { ascending: true })
+  if (!all) return { success: false }
+  const idx = all.findIndex((r: { id: string }) => r.id === imageId)
+  if (idx < 0 || idx >= all.length - 1) return { success: false }
+  const next = all[idx + 1]
+  const cur = all[idx]
+  await supabaseAdmin.from('spot_images').update({ sort_order: next.sort_order }).eq('id', cur.id)
+  await supabaseAdmin.from('spot_images').update({ sort_order: cur.sort_order }).eq('id', next.id)
+  revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
 // ── スポット新規作成（adminフォーム用）────────────────────
 export async function createSpot(_prev: unknown, formData: FormData) {
   await assertAdmin()

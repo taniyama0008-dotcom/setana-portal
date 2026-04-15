@@ -75,6 +75,15 @@ export interface ReviewImage {
   alt_text: string | null
 }
 
+export interface SpotImage {
+  id: string
+  spot_id: string
+  image_url: string
+  alt_text: string | null
+  sort_order: number
+  created_at: string
+}
+
 export type HousingSupport = 'provided' | 'subsidized' | 'none'
 export type KyoryokutaiStatus = 'draft' | 'published'
 

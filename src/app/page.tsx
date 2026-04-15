@@ -78,37 +78,18 @@ const lifeCards = [
   },
 ]
 
-// プレースホルダー記事データ
-const placeholderArticles = [
-  {
-    category: '暮らし',
-    date: '2026年4月',
-    title: 'せたな町の春の山菜採り — 自然と共に生きる暮らし',
-    excerpt: '雪解けとともに山に入り、ふきのとうやコゴミを摘む。せたなの春の風物詩を移住者の目線でレポート。',
-    color: '#5b7e95',
-  },
-  {
-    category: '食',
-    date: '2026年3月',
-    title: '港直送のスケソウダラ — 漁師町の朝市を歩く',
-    excerpt: '早朝5時、瀬棚漁港に並ぶ新鮮な魚たち。漁師さんとの会話から生まれる、せたならしい食の風景。',
-    color: '#c47e4f',
-  },
-  {
-    category: '自然',
-    date: '2026年3月',
-    title: '三本杉岩と夕日 — せたな町が誇る絶景スポット',
-    excerpt: '日本海に突き刺さる3本の奇岩。夕暮れ時、水平線に沈む太陽がシルエットを金色に染め上げる。',
-    color: '#6b8f71',
-  },
-]
+const sectionArticleConfig: Record<string, { label: string; color: string }> = {
+  kurashi: { label: '暮らし', color: '#5b7e95' },
+  shoku:   { label: '食',     color: '#c47e4f' },
+  shizen:  { label: '自然',   color: '#6b8f71' },
+}
 
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
 
 export default async function Home() {
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: spots }, { data: upcomingEvents }, { data: publicReports }] = await Promise.all([
+  const [{ data: spots }, { data: upcomingEvents }, { data: publicReports }, { data: latestArticles }] = await Promise.all([
     supabase
       .from('spots')
       .select('*')
@@ -129,6 +110,12 @@ export default async function Home() {
       .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('articles')
+      .select('id, title, slug, section, cover_image, excerpt, created_at')
+      .eq('status', 'public')
+      .order('created_at', { ascending: false })
+      .limit(3),
   ])
 
   const events  = (upcomingEvents ?? []) as CalendarEvent[]
@@ -388,37 +375,61 @@ export default async function Home() {
           )}
 
           {/* 記事3件 */}
-          <div className="space-y-0">
-            {placeholderArticles.map((article, i) => (
-              <article
-                key={i}
-                className="flex items-start gap-6 py-8 border-b border-[#efefef] last:border-0 group cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                {/* 写真プレースホルダー */}
-                <div
-                  className="w-[100px] h-[68px] lg:w-[140px] lg:h-[94px] rounded-[6px] shrink-0 opacity-80"
-                  style={{ background: `linear-gradient(135deg, ${article.color}88, ${article.color}44)` }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className="text-[10px] font-medium tracking-[0.1em] px-2 py-0.5 rounded"
-                      style={{ backgroundColor: `${article.color}18`, color: article.color }}
-                    >
-                      {article.category}
-                    </span>
-                    <time className="text-[12px] text-[#8a8a8a]">{article.date}</time>
-                  </div>
-                  <h3 className="text-[15px] lg:text-[16px] font-medium text-[#1a1a1a] leading-[1.6] tracking-[0.03em] mb-2 line-clamp-2">
-                    {article.title}
-                  </h3>
-                  <p className="text-[13px] text-[#5c5c5c] leading-[1.8] hidden sm:line-clamp-2">
-                    {article.excerpt}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
+          {latestArticles && latestArticles.length > 0 ? (
+            <div className="space-y-0">
+              {latestArticles.map((article: any) => {
+                const secCfg = sectionArticleConfig[article.section] ?? sectionArticleConfig.kurashi
+                const d = new Date(article.created_at)
+                const dateStr = `${d.getFullYear()}年${d.getMonth() + 1}月`
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/article/${article.slug}`}
+                    className="flex items-start gap-6 py-8 border-b border-[#efefef] last:border-0 group hover:opacity-80 transition-opacity"
+                  >
+                    {/* サムネイル */}
+                    <div className="relative w-[100px] h-[68px] lg:w-[140px] lg:h-[94px] rounded-[6px] shrink-0 overflow-hidden">
+                      {article.cover_image ? (
+                        <Image
+                          src={article.cover_image}
+                          alt={article.title}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full opacity-80"
+                          style={{ background: `linear-gradient(135deg, ${secCfg.color}88, ${secCfg.color}44)` }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span
+                          className="text-[10px] font-medium tracking-[0.1em] px-2 py-0.5 rounded"
+                          style={{ backgroundColor: `${secCfg.color}18`, color: secCfg.color }}
+                        >
+                          {secCfg.label}
+                        </span>
+                        <time className="text-[12px] text-[#8a8a8a]">{dateStr}</time>
+                      </div>
+                      <h3 className="text-[15px] lg:text-[16px] font-medium text-[#1a1a1a] leading-[1.6] tracking-[0.03em] mb-2 line-clamp-2">
+                        {article.title}
+                      </h3>
+                      {article.excerpt && (
+                        <p className="text-[13px] text-[#5c5c5c] leading-[1.8] hidden sm:line-clamp-2">
+                          {article.excerpt}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#8a8a8a] py-4">まだ記事がありません。</p>
+          )}
         </div>
       </section>
 

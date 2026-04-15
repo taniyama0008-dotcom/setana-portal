@@ -1,8 +1,16 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { supabase } from '@/lib/supabase'
 import { getSessionUserId } from '@/lib/session'
 import MyPageProfile from './MyPageProfile'
+
+const sectionConfig = {
+  kurashi: { label: '暮らし', bgClass: 'bg-[#5b7e95]', gradient: 'from-[#5b7e95] to-[#3d5a6e]' },
+  shoku:   { label: '食',     bgClass: 'bg-[#c47e4f]', gradient: 'from-[#c47e4f] to-[#a5663a]' },
+  shizen:  { label: '自然',   bgClass: 'bg-[#6b8f71]', gradient: 'from-[#6b8f71] to-[#4a6b50]' },
+}
 
 function StarDisplay({ rating }: { rating: number }) {
   return (
@@ -23,7 +31,7 @@ export default async function MyPage() {
   const uid = await getSessionUserId()
   if (!uid) redirect('/')
 
-  const [{ data: user }, { data: myReviews }, { data: coinTxs }] = await Promise.all([
+  const [{ data: user }, { data: myReviews }, { data: coinTxs }, { data: favorites }] = await Promise.all([
     supabaseAdmin
       .from('users')
       .select('id, nickname, line_display_name, line_picture_url, role, coin_balance, created_at')
@@ -40,7 +48,16 @@ export default async function MyPage() {
       .eq('user_id', uid)
       .order('created_at', { ascending: false })
       .limit(20),
+    supabase
+      .from('favorites')
+      .select('spot_id, spots(id, name, slug, section, area, cover_image, category)')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false }),
   ])
+
+  const favSpots = (favorites ?? [])
+    .map((f: any) => f.spots)
+    .filter(Boolean)
 
   return (
     <div className="min-h-screen bg-[#faf8f5]">
@@ -48,6 +65,64 @@ export default async function MyPage() {
 
         {/* プロフィール */}
         <MyPageProfile userId={uid} dbUser={user} />
+
+        <div className="my-10 border-t border-[#e0e0e0]" />
+
+        {/* お気に入りスポット */}
+        <section>
+          <h2 className="text-[16px] font-semibold text-[#1a1a1a] tracking-[0.03em] mb-6">
+            お気に入りスポット
+            <span className="ml-2 text-[13px] font-normal text-[#8a8a8a]">{favSpots.length}件</span>
+          </h2>
+
+          {favSpots.length === 0 ? (
+            <p className="text-[14px] text-[#8a8a8a] py-4">
+              お気に入りに追加したスポットが表示されます。
+              スポットページのハートアイコンから追加できます。
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {favSpots.map((spot: any) => {
+                const sec = sectionConfig[spot.section as keyof typeof sectionConfig] ?? sectionConfig.kurashi
+                return (
+                  <li key={spot.id}>
+                    <Link
+                      href={`/spot/${spot.slug}`}
+                      className="flex items-center gap-4 bg-white rounded-[8px] border border-[#efefef] p-3 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow"
+                    >
+                      {/* サムネイル */}
+                      <div className="relative w-16 h-12 rounded-[6px] overflow-hidden shrink-0">
+                        {spot.cover_image ? (
+                          <Image
+                            src={spot.cover_image}
+                            alt={spot.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${sec.gradient}`} />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`inline-block px-2 py-0.5 rounded text-white text-[10px] font-medium ${sec.bgClass}`}>
+                            {sec.label}
+                          </span>
+                          {spot.category && (
+                            <span className="text-[11px] text-[#8a8a8a]">{spot.category}</span>
+                          )}
+                        </div>
+                        <p className="text-[14px] font-medium text-[#1a1a1a] leading-snug truncate">{spot.name}</p>
+                      </div>
+                      <span className="text-[#c0c0c0] text-[12px] shrink-0">→</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
 
         <div className="my-10 border-t border-[#e0e0e0]" />
 
@@ -90,16 +165,6 @@ export default async function MyPage() {
               ))}
             </ul>
           )}
-        </section>
-
-        <div className="my-10 border-t border-[#e0e0e0]" />
-
-        {/* お気に入り（将来実装） */}
-        <section className="opacity-50">
-          <h2 className="text-[16px] font-semibold text-[#1a1a1a] tracking-[0.03em] mb-3">
-            お気に入りスポット
-          </h2>
-          <p className="text-[13px] text-[#8a8a8a]">この機能は近日公開予定です。</p>
         </section>
 
         <div className="my-10 border-t border-[#e0e0e0]" />
