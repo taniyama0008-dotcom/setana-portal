@@ -1,11 +1,11 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { createJob } from '@/app/actions/jobs'
+import { adminCreateJob } from '@/app/actions/jobs'
 import JobFormFields from '@/components/jobs/JobFormFields'
 
-export default function JobForm({ spots }: { spots: { id: string; name: string }[] }) {
-  const [state, formAction, isPending] = useActionState(createJob, null)
+export default function AdminJobForm({ spots }: { spots: { id: string; name: string }[] }) {
+  const [state, formAction, isPending] = useActionState(adminCreateJob, null)
   const [open, setOpen] = useState(false)
 
   if (state?.success && open) setOpen(false)
@@ -15,7 +15,7 @@ export default function JobForm({ spots }: { spots: { id: string; name: string }
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="px-5 py-2.5 bg-[#c47e4f] hover:bg-[#a5663a] text-white text-[13px] font-medium rounded-[8px] transition-colors"
+          className="px-5 py-2.5 bg-[#5b7e95] hover:bg-[#3d5a6e] text-white text-[13px] font-medium rounded-[8px] transition-colors"
         >
           + 新規求人を登録
         </button>
@@ -36,14 +36,14 @@ export default function JobForm({ spots }: { spots: { id: string; name: string }
                 {state.error}
               </p>
             )}
-            <JobFormFields spots={spots} />
+            <JobFormFields spots={spots} showStatus />
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[#c47e4f] hover:bg-[#a5663a] disabled:opacity-50 text-white text-[13px] font-medium rounded-[8px] transition-colors"
+                className="px-6 py-2.5 bg-[#5b7e95] hover:bg-[#3d5a6e] disabled:opacity-50 text-white text-[13px] font-medium rounded-[8px] transition-colors"
               >
-                {isPending ? '登録中...' : '求人を公開する'}
+                {isPending ? '登録中...' : '求人を登録する'}
               </button>
             </div>
           </form>

@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import StatusBadge from '@/components/admin/StatusBadge'
 import JobActions from './JobActions'
+import AdminJobForm from './AdminJobForm'
 
 const typeLabel: Record<string, string> = {
   regular:   '正規・パート',
@@ -14,10 +15,16 @@ function formatDate(d: string) {
 }
 
 export default async function AdminJobsPage() {
-  const { data: jobs } = await supabaseAdmin
-    .from('jobs')
-    .select('*, spots(name), users(line_display_name, nickname)')
-    .order('created_at', { ascending: false })
+  const [{ data: jobs }, { data: spots }] = await Promise.all([
+    supabaseAdmin
+      .from('jobs')
+      .select('*, spots(name), users(line_display_name, nickname)')
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('spots')
+      .select('id, name')
+      .order('name'),
+  ])
 
   const list = jobs ?? []
 
@@ -28,9 +35,11 @@ export default async function AdminJobsPage() {
         <p className="text-[13px] text-[#8a8a8a]">{list.length}件</p>
       </div>
 
+      <AdminJobForm spots={spots ?? []} />
+
       {list.length === 0 ? (
         <div className="bg-white rounded-[8px] border border-[#efefef] p-12 text-center">
-          <p className="text-[#8a8a8a] text-[14px]">求人がありません。事業者管理画面から登録できます。</p>
+          <p className="text-[#8a8a8a] text-[14px]">求人がありません。上のボタンから登録してください。</p>
         </div>
       ) : (
         <div className="bg-white rounded-[8px] border border-[#efefef] overflow-hidden">

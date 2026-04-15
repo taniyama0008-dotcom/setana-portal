@@ -68,6 +68,63 @@ export async function deleteJob(jobId: string) {
   return { success: true }
 }
 
+export async function adminCreateJob(_prev: unknown, formData: FormData) {
+  await assertAdmin()
+  const userId = await getSessionUserId()
+
+  const title = (formData.get('title') as string ?? '').trim()
+  if (!title) return { error: '求人タイトルを入力してください' }
+
+  const str = (key: string) => (formData.get(key) as string ?? '').trim() || null
+
+  const { error } = await supabaseAdmin.from('jobs').insert({
+    title,
+    type:         (formData.get('type') as string) || 'regular',
+    description:  str('description'),
+    salary_range: str('salary_range'),
+    requirements: str('requirements'),
+    contact_info: str('contact_info'),
+    spot_id:      str('spot_id'),
+    status:       (formData.get('status') as string) || 'open',
+    user_id:      userId,
+  })
+
+  if (error) return { error: '求人の作成に失敗しました' }
+
+  revalidatePath('/admin/jobs')
+  revalidatePath('/life/work')
+  return { success: true }
+}
+
+export async function adminUpdateJob(_prev: unknown, formData: FormData) {
+  await assertAdmin()
+
+  const id = formData.get('id') as string
+  if (!id) return { error: 'IDが見つかりません。' }
+
+  const title = (formData.get('title') as string ?? '').trim()
+  if (!title) return { error: '求人タイトルを入力してください' }
+
+  const str = (key: string) => (formData.get(key) as string ?? '').trim() || null
+
+  const { error } = await supabaseAdmin.from('jobs').update({
+    title,
+    type:         (formData.get('type') as string) || 'regular',
+    description:  str('description'),
+    salary_range: str('salary_range'),
+    requirements: str('requirements'),
+    contact_info: str('contact_info'),
+    spot_id:      str('spot_id'),
+    status:       (formData.get('status') as string) || 'open',
+  }).eq('id', id)
+
+  if (error) return { error: `更新に失敗しました: ${error.message}` }
+
+  revalidatePath('/admin/jobs')
+  revalidatePath('/life/work')
+  return { success: true }
+}
+
 export async function adminUpdateJobStatus(jobId: string, status: 'open' | 'closed') {
   await assertAdmin()
   await supabaseAdmin.from('jobs').update({ status }).eq('id', jobId)

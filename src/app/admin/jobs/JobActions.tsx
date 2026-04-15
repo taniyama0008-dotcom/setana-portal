@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useTransition } from 'react'
 import { adminUpdateJobStatus, adminDeleteJob } from '@/app/actions/jobs'
 
@@ -14,6 +15,12 @@ export default function JobActions({
 
   return (
     <div className="flex items-center gap-2">
+      <Link
+        href={`/admin/jobs/${jobId}/edit`}
+        className="text-[12px] px-2.5 py-1 border border-[#e0e0e0] rounded text-[#5c5c5c] hover:border-[#5b7e95] hover:text-[#5b7e95] transition-colors"
+      >
+        編集
+      </Link>
       <button
         disabled={isPending}
         onClick={() =>
