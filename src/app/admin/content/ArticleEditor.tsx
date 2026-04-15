@@ -1,12 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { saveArticle } from '@/app/actions/article'
+import { supabase } from '@/lib/supabase'
 import type { Article } from '@/lib/types'
+
+async function resizeImage(file: File, maxWidth = 1600): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const scale = Math.min(1, maxWidth / img.width)
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(
+        (blob) => { if (blob) resolve(blob); else reject(new Error('resize failed')) },
+        'image/jpeg',
+        0.88,
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('load failed')) }
+    img.src = objectUrl
+  })
+}
 
 const sectionOptions = [
   { value: 'kurashi', label: '暮らし' },
@@ -50,9 +75,32 @@ export default function ArticleEditor({ article }: ArticleEditorProps) {
   const [excerpt, setExcerpt]     = useState(article?.excerpt ?? '')
   const [content, setContent]     = useState(article?.content ?? '')
   const [authorName, setAuthorName] = useState(article?.author_name ?? '')
-  const [mode, setMode]           = useState<'edit' | 'preview'>('edit')
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState<string | null>(null)
+  const [mode, setMode]             = useState<'edit' | 'preview'>('edit')
+  const [saving, setSaving]         = useState(false)
+  const [error, setError]           = useState<string | null>(null)
+  const [coverUploading, setCoverUploading] = useState(false)
+  const coverFileRef                = useRef<HTMLInputElement>(null)
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setCoverUploading(true)
+    try {
+      const blob = await resizeImage(file)
+      const path = `articles/${Date.now()}_cover.jpg`
+      const { error: upErr } = await supabase.storage
+        .from('articles')
+        .upload(path, blob, { contentType: 'image/jpeg' })
+      if (upErr) throw upErr
+      const { data } = supabase.storage.from('articles').getPublicUrl(path)
+      setCoverImage(data.publicUrl)
+    } catch {
+      alert('カバー画像のアップロードに失敗しました。')
+    } finally {
+      setCoverUploading(false)
+    }
+  }
 
   const handleTitleChange = (v: string) => {
     setTitle(v)
@@ -165,14 +213,42 @@ export default function ArticleEditor({ article }: ArticleEditorProps) {
 
       {/* カバー画像URL */}
       <div>
-        <label className={labelClass}>カバー画像URL</label>
-        <input
-          type="url"
-          value={coverImage}
-          onChange={(e) => setCoverImage(e.target.value)}
-          placeholder="https://..."
-          className={inputClass}
-        />
+        <label className={labelClass}>カバー画像</label>
+        <div className="flex gap-2 items-center">
+          <input
+            type="url"
+            value={coverImage}
+            onChange={(e) => setCoverImage(e.target.value)}
+            placeholder="https://..."
+            className={`${inputClass} flex-1`}
+          />
+          <input
+            ref={coverFileRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={handleCoverUpload}
+          />
+          <button
+            type="button"
+            disabled={coverUploading}
+            onClick={() => coverFileRef.current?.click()}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 border border-[#e0e0e0] rounded-[6px] text-[13px] text-[#5c5c5c] hover:border-[#5b7e95] hover:text-[#5b7e95] transition-colors disabled:opacity-50 min-h-[42px]"
+          >
+            {coverUploading ? (
+              <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            )}
+            {coverUploading ? 'アップロード中...' : 'ファイルをアップロード'}
+          </button>
+        </div>
         {coverImage && (
           <div className="mt-2">
             <Image
