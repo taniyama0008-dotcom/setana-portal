@@ -1,9 +1,34 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 import Image from 'next/image'
 import type { Spot } from '@/lib/types'
 import { updateSpot } from '@/app/actions/admin'
+import { supabase } from '@/lib/supabase'
+
+async function resizeImage(file: File, maxWidth = 1600): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const scale = Math.min(1, maxWidth / img.width)
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(
+        (blob) => { if (blob) resolve(blob); else reject(new Error('resize failed')) },
+        'image/jpeg',
+        0.88,
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('load failed')) }
+    img.src = objectUrl
+  })
+}
 
 const inputClass =
   'w-full bg-white border border-[#e0e0e0] rounded-[6px] px-3 py-2.5 text-[14px] text-[#1a1a1a] focus:outline-none focus:border-[#5b7e95] transition-colors'
@@ -25,6 +50,29 @@ const sectionOptions = [
 export default function SpotEditForm({ spot }: { spot: Spot }) {
   const [state, action, isPending] = useActionState(updateSpot, null)
   const [coverPreview, setCoverPreview] = useState(spot.cover_image ?? '')
+  const [coverUploading, setCoverUploading] = useState(false)
+  const coverFileRef = useRef<HTMLInputElement>(null)
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setCoverUploading(true)
+    try {
+      const blob = await resizeImage(file)
+      const path = `spots/${spot.id}/cover.jpg`
+      const { error: upErr } = await supabase.storage
+        .from('spots')
+        .upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+      if (upErr) throw upErr
+      const { data } = supabase.storage.from('spots').getPublicUrl(path)
+      setCoverPreview(data.publicUrl)
+    } catch {
+      alert('カバー画像のアップロードに失敗しました。')
+    } finally {
+      setCoverUploading(false)
+    }
+  }
 
   return (
     <form action={action} className="space-y-8">
@@ -187,14 +235,42 @@ export default function SpotEditForm({ spot }: { spot: Spot }) {
       {/* ── カバー画像 ── */}
       <section>
         <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-4">カバー画像</h2>
-        <input
-          name="cover_image"
-          type="url"
-          value={coverPreview}
-          onChange={e => setCoverPreview(e.target.value)}
-          placeholder="https://..."
-          className={inputClass}
-        />
+        <div className="flex gap-2 items-center">
+          <input
+            name="cover_image"
+            type="url"
+            value={coverPreview}
+            onChange={e => setCoverPreview(e.target.value)}
+            placeholder="https://..."
+            className={`${inputClass} flex-1`}
+          />
+          <input
+            ref={coverFileRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={handleCoverUpload}
+          />
+          <button
+            type="button"
+            disabled={coverUploading}
+            onClick={() => coverFileRef.current?.click()}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 border border-[#e0e0e0] rounded-[6px] text-[13px] text-[#5c5c5c] hover:border-[#5b7e95] hover:text-[#5b7e95] transition-colors disabled:opacity-50 min-h-[42px]"
+          >
+            {coverUploading ? (
+              <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            )}
+            {coverUploading ? 'アップロード中...' : 'ファイルをアップロード'}
+          </button>
+        </div>
         {coverPreview && (
           <div className="mt-3 relative w-full max-w-[400px] aspect-[3/2] rounded-[6px] overflow-hidden border border-[#e0e0e0]">
             <Image src={coverPreview} alt="カバープレビュー" fill className="object-cover" unoptimized />
