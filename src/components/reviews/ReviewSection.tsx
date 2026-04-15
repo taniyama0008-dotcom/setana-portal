@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getSessionUserId } from '@/lib/session'
-import type { Review } from '@/lib/types'
+import type { Review, ReviewImage } from '@/lib/types'
 import ReviewForm from './ReviewForm'
+import ReviewImages from './ReviewImages'
 
 interface ReviewSectionProps {
   spotId: string
@@ -63,6 +64,25 @@ export default async function ReviewSection({
 
   const list = (reviews ?? []) as Review[]
   const count = list.length
+
+  // 口コミ画像を一括取得してreview_idでグループ化
+  let imagesByReviewId: Record<string, ReviewImage[]> = {}
+  if (list.length > 0) {
+    const reviewIds = list.map((r) => r.id)
+    const { data: allImages } = await supabase
+      .from('review_images')
+      .select('*')
+      .in('review_id', reviewIds)
+    if (allImages) {
+      for (const img of allImages as ReviewImage[]) {
+        if (!imagesByReviewId[img.review_id]) {
+          imagesByReviewId[img.review_id] = []
+        }
+        imagesByReviewId[img.review_id].push(img)
+      }
+    }
+  }
+
   const avg =
     count > 0
       ? Math.round((list.reduce((s, r) => s + r.rating, 0) / count) * 10) / 10
@@ -111,37 +131,43 @@ export default async function ReviewSection({
         {/* 口コミ一覧 */}
         {count > 0 ? (
           <ul className="space-y-6 mb-12">
-            {list.map((review) => (
-              <li key={review.id} className="pb-6 border-b border-[#efefef] last:border-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-[#e0e0e0] flex items-center justify-center text-[12px] font-medium text-[#5c5c5c] flex-shrink-0">
-                    {review.nickname.slice(0, 1)}
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium text-[#1a1a1a]">{review.nickname}</p>
-                    <div className="flex items-center gap-2">
-                      <StarDisplay rating={review.rating} size="sm" />
-                      {review.visit_date && (
-                        <>
-                          <span className="text-[#e0e0e0] text-[11px]">·</span>
-                          <span className="text-[12px] text-[#8a8a8a]">
-                            {formatVisitDate(review.visit_date)}に訪問
-                          </span>
-                        </>
-                      )}
+            {list.map((review) => {
+              const reviewImages = imagesByReviewId[review.id] ?? []
+              return (
+                <li key={review.id} className="pb-6 border-b border-[#efefef] last:border-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-[#e0e0e0] flex items-center justify-center text-[12px] font-medium text-[#5c5c5c] flex-shrink-0">
+                      {review.nickname.slice(0, 1)}
                     </div>
+                    <div>
+                      <p className="text-[13px] font-medium text-[#1a1a1a]">{review.nickname}</p>
+                      <div className="flex items-center gap-2">
+                        <StarDisplay rating={review.rating} size="sm" />
+                        {review.visit_date && (
+                          <>
+                            <span className="text-[#e0e0e0] text-[11px]">·</span>
+                            <span className="text-[12px] text-[#8a8a8a]">
+                              {formatVisitDate(review.visit_date)}に訪問
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <span className="ml-auto text-[12px] text-[#8a8a8a]">
+                      {formatDate(review.created_at)}
+                    </span>
                   </div>
-                  <span className="ml-auto text-[12px] text-[#8a8a8a]">
-                    {formatDate(review.created_at)}
-                  </span>
-                </div>
-                {review.text && (
-                  <p className="text-[14px] text-[#1a1a1a] leading-[1.8] tracking-[0.05em] mt-3 ml-11">
-                    {review.text}
-                  </p>
-                )}
-              </li>
-            ))}
+                  {review.text && (
+                    <p className="text-[14px] text-[#1a1a1a] leading-[1.8] tracking-[0.05em] mt-3 ml-11">
+                      {review.text}
+                    </p>
+                  )}
+                  {reviewImages.length > 0 && (
+                    <ReviewImages images={reviewImages} />
+                  )}
+                </li>
+              )
+            })}
           </ul>
         ) : (
           <p className="text-[14px] text-[#8a8a8a] mb-10">
