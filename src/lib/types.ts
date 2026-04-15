@@ -32,6 +32,7 @@ export interface Spot {
   booking_phone?: string | null
   room_count?: number | null
   capacity?: number | null
+  website?: string | null
 }
 
 export type EventStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled'

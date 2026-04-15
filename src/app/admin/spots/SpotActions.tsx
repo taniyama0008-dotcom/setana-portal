@@ -16,6 +16,12 @@ export default function SpotActions({
   return (
     <div className="flex items-center gap-2">
       <Link
+        href={`/admin/spots/${spotId}/edit`}
+        className="text-[12px] px-2.5 py-1 border border-[#e0e0e0] rounded text-[#5c5c5c] hover:border-[#5b7e95] hover:text-[#5b7e95] transition-colors"
+      >
+        編集
+      </Link>
+      <Link
         href={`/admin/spots/${spotId}/images`}
         className="text-[12px] px-2.5 py-1 border border-[#e0e0e0] rounded text-[#5c5c5c] hover:border-[#5b7e95] hover:text-[#5b7e95] transition-colors"
       >

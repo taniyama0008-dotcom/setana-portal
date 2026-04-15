@@ -139,6 +139,65 @@ export async function moveSpotImageDown(imageId: string, spotId: string) {
   return { success: true }
 }
 
+// ── スポット基本情報更新（adminフォーム用）───────────────
+export async function updateSpot(_prev: unknown, formData: FormData) {
+  await assertAdmin()
+
+  const id = formData.get('id') as string
+  if (!id) return { error: 'IDが見つかりません。' }
+
+  const str = (key: string) => (formData.get(key) as string)?.trim() || null
+  const num = (key: string) => {
+    const v = (formData.get(key) as string)?.trim()
+    return v ? parseFloat(v) : null
+  }
+  const int = (key: string) => {
+    const v = (formData.get(key) as string)?.trim()
+    return v ? parseInt(v, 10) : null
+  }
+  const bool = (key: string) => formData.get(key) === 'on'
+
+  const slug = str('slug') ?? ''
+  if (!slug) return { error: 'スラッグは必須です。' }
+
+  const payload = {
+    name:           str('name') ?? '',
+    slug,
+    section:        str('section') ?? '',
+    category:       str('category') ?? '',
+    area:           str('area'),
+    description:    str('description'),
+    address:        str('address'),
+    phone:          str('phone'),
+    business_hours: str('business_hours'),
+    holidays:       str('holidays'),
+    latitude:       num('latitude'),
+    longitude:      num('longitude'),
+    cover_image:    str('cover_image'),
+    price_range:    str('price_range'),
+    has_onsen:      bool('has_onsen'),
+    has_meals:      bool('has_meals'),
+    booking_url:    str('booking_url'),
+    booking_phone:  str('booking_phone'),
+    room_count:     int('room_count'),
+    capacity:       int('capacity'),
+    website:        str('website'),
+    updated_at:     new Date().toISOString(),
+  }
+
+  if (!payload.name) return { error: '名前は必須です。' }
+
+  const { error } = await supabaseAdmin.from('spots').update(payload).eq('id', id)
+  if (error) {
+    if (error.code === '23505') return { error: 'そのスラッグは既に使用されています。' }
+    return { error: `更新に失敗しました: ${error.message}` }
+  }
+
+  revalidatePath('/admin/spots')
+  revalidatePath(`/spot/${slug}`)
+  return { success: true }
+}
+
 // ── スポット新規作成（adminフォーム用）────────────────────
 export async function createSpot(_prev: unknown, formData: FormData) {
   await assertAdmin()
