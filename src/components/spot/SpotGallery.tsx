@@ -57,7 +57,7 @@ export default function SpotGallery({ images, coverImage, spotName, gradient }: 
       {allImages.length > 1 && (
         <div className="bg-[#111] px-4 py-2">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {allImages.slice(0, 10).map((img, i) => (
+            {allImages.slice(0, 5).map((img, i) => (
               <button
                 key={i}
                 type="button"

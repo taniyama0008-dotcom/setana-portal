@@ -5,6 +5,9 @@ import Image from 'next/image'
 import type { SpotImage } from '@/lib/types'
 import { addSpotImage, deleteSpotImage, moveSpotImageUp, moveSpotImageDown } from '@/app/actions/admin'
 import { supabase } from '@/lib/supabase'
+import { syncSpotCoverImage } from '@/app/actions/spotCover'
+
+const MAX = 5
 
 async function resizeImage(file: File, maxWidth = 1600): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -47,17 +50,23 @@ export default function SpotImageManager({
 
   const handleAdd = () => {
     if (!url.trim()) return
+    if (images.length >= MAX) return
     start(async () => {
       await addSpotImage(spotId, url.trim(), alt.trim())
+      await syncSpotCoverImage(spotId)
       setUrl('')
       setAlt('')
     })
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? [])
-    if (files.length === 0) return
+    const allFiles = Array.from(e.target.files ?? [])
+    if (allFiles.length === 0) return
     e.target.value = ''
+
+    const remaining = MAX - images.length
+    if (remaining <= 0) return
+    const files = allFiles.slice(0, remaining)
 
     setUploadError(null)
     setProgress({ done: 0, total: files.length })
@@ -74,41 +83,50 @@ export default function SpotImageManager({
         // server action で spot_images に INSERT
         await addSpotImage(spotId, data.publicUrl, '')
         setProgress({ done: i + 1, total: files.length })
-      } catch (err) {
+      } catch {
         setUploadError(`${files[i].name} のアップロードに失敗しました。`)
         break
       }
     }
 
+    await syncSpotCoverImage(spotId)
     setProgress(null)
   }
+
+  const atLimit = images.length >= MAX
 
   return (
     <div className="space-y-6">
       {/* ── ファイルアップロード ── */}
       <div className="bg-white border border-[#e0e0e0] rounded-[8px] p-5">
         <p className="text-[13px] font-medium text-[#5c5c5c] mb-3">ファイルをアップロード</p>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="sr-only"
-          onChange={handleFileUpload}
-        />
-        <button
-          type="button"
-          disabled={isPending || uploadProgress !== null}
-          onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-3 border border-dashed border-[#c8c8c8] rounded-[8px] bg-[#faf8f5] hover:bg-[#f0eeeb] text-[13px] text-[#5c5c5c] transition-colors disabled:opacity-50 min-h-[44px]"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-          画像を選択（複数可）
-        </button>
+        {atLimit ? (
+          <p className="text-[13px] text-[#8a8a8a]">最大5枚です</p>
+        ) : (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              onChange={handleFileUpload}
+            />
+            <button
+              type="button"
+              disabled={isPending || uploadProgress !== null}
+              onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-3 border border-dashed border-[#c8c8c8] rounded-[8px] bg-[#faf8f5] hover:bg-[#f0eeeb] text-[13px] text-[#5c5c5c] transition-colors disabled:opacity-50 min-h-[44px]"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              画像を選択（複数可）
+            </button>
+          </>
+        )}
 
         {/* プログレスバー */}
         {uploadProgress && (
@@ -128,10 +146,13 @@ export default function SpotImageManager({
         {uploadError && (
           <p className="mt-2 text-[12px] text-[#d94f4f]">{uploadError}</p>
         )}
-        <p className="mt-2 text-[11px] text-[#8a8a8a]">最大幅1600pxに自動リサイズ。Supabase Storage の spots バケットに保存されます。</p>
+        {!atLimit && (
+          <p className="mt-2 text-[11px] text-[#8a8a8a]">最大幅1600pxに自動リサイズ。Supabase Storage の spots バケットに保存されます。最大{MAX}枚。</p>
+        )}
       </div>
 
       {/* ── URL入力 ── */}
+      {!atLimit && (
       <div className="bg-[#faf8f5] rounded-[8px] p-5 border border-[#e0e0e0]">
         <p className="text-[13px] font-medium text-[#5c5c5c] mb-3">URLで追加</p>
         <div className="flex gap-2 flex-wrap">
@@ -165,6 +186,7 @@ export default function SpotImageManager({
           </div>
         )}
       </div>
+      )}
 
       {/* ── 画像リスト ── */}
       {images.length === 0 ? (
@@ -189,14 +211,14 @@ export default function SpotImageManager({
                 <button
                   type="button"
                   disabled={isPending || i === 0}
-                  onClick={() => start(async () => { await moveSpotImageUp(img.id, spotId) })}
+                  onClick={() => start(async () => { await moveSpotImageUp(img.id, spotId); await syncSpotCoverImage(spotId) })}
                   className="w-7 h-7 flex items-center justify-center text-[#5c5c5c] hover:text-[#1a1a1a] disabled:opacity-30 transition-colors"
                   aria-label="上へ"
                 >↑</button>
                 <button
                   type="button"
                   disabled={isPending || i === images.length - 1}
-                  onClick={() => start(async () => { await moveSpotImageDown(img.id, spotId) })}
+                  onClick={() => start(async () => { await moveSpotImageDown(img.id, spotId); await syncSpotCoverImage(spotId) })}
                   className="w-7 h-7 flex items-center justify-center text-[#5c5c5c] hover:text-[#1a1a1a] disabled:opacity-30 transition-colors"
                   aria-label="下へ"
                 >↓</button>
@@ -206,7 +228,7 @@ export default function SpotImageManager({
                   onClick={() => {
                     if (!confirm('この画像を削除しますか？')) return
                     setImages(prev => prev.filter(im => im.id !== img.id))
-                    start(async () => { await deleteSpotImage(img.id, spotId) })
+                    start(async () => { await deleteSpotImage(img.id, spotId); await syncSpotCoverImage(spotId) })
                   }}
                   className="w-7 h-7 flex items-center justify-center text-[#8a8a8a] hover:text-[#d94f4f] disabled:opacity-50 transition-colors"
                   aria-label="削除"
