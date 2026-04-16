@@ -71,6 +71,7 @@ export default function Footer() {
           <nav className="flex items-center gap-5">
             <Link href="/about"   className="text-[11px] text-white/30 hover:text-white/70 transition-colors">SETANAについて</Link>
             <Link href="/contact" className="text-[11px] text-white/30 hover:text-white/70 transition-colors">お問い合わせ</Link>
+            <Link href="/privacy" className="text-[11px] text-white/30 hover:text-white/70 transition-colors">プライバシーポリシー</Link>
           </nav>
         </div>
       </div>
