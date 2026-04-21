@@ -29,10 +29,15 @@ export default async function NaturePage() {
     .from('spots')
     .select('*')
     .eq('status', 'public')
-    .eq('section', 'shizen')
+    .eq('section', 'travel')
+    .or('primary_category.eq.nature,sub_categories.cs.{nature}')
     .order('created_at', { ascending: false })
 
-  const list = (spots ?? []) as Spot[]
+  const list = ((spots ?? []) as Spot[]).sort((a, b) => {
+    const ao = (a.spot_order?.nature) ?? 999
+    const bo = (b.spot_order?.nature) ?? 999
+    return ao - bo
+  })
 
   return (
     <>

@@ -1,26 +1,15 @@
 import Link from 'next/link'
+import { categoryMaster, getCategoriesForSection, type Section } from '@/lib/taxonomy'
 
-const travelLinks = [
-  { href: '/travel/gourmet', label: 'グルメ' },
-  { href: '/travel/nature',  label: '観光・自然' },
-  { href: '/travel/onsen',   label: '温泉' },
-  { href: '/travel/stay',    label: '泊まる' },
-  { href: '/travel/access',  label: 'アクセス' },
-]
-
-const lifeLinks = [
-  { href: '/life/work',      label: 'しごと・求人' },
-  { href: '/kyoryokutai',    label: '地域おこし協力隊' },
-  { href: '/life/living',    label: '暮らしのリアル' },
-  { href: '/life/migration', label: '移住支援' },
-]
-
-const connectLinks = [
-  { href: '/connect/furusato',           label: 'ふるさと納税' },
-  { href: '/connect/corporate-furusato', label: '企業版ふるさと納税' },
-  { href: '/connect/famimatch',          label: 'ファミマッチ' },
-  { href: '/connect/relation',           label: '関係人口' },
-]
+const sections = (['travel', 'life', 'connect'] as const).map((key) => ({
+  key,
+  labelEn: categoryMaster[key].labelEn,
+  topHref: categoryMaster[key].topHref,
+  links:   getCategoriesForSection(key).map(([, entry]) => ({
+    href:  entry.path,
+    label: entry.label,
+  })),
+}))
 
 export default function Footer() {
   return (
@@ -38,53 +27,23 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* 旅する */}
-          <div>
-            <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">TRAVEL</p>
-            <nav className="space-y-2">
-              {travelLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* 暮らす */}
-          <div>
-            <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">LIFE</p>
-            <nav className="space-y-2">
-              {lifeLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* 関わる */}
-          <div>
-            <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">CONNECT</p>
-            <nav className="space-y-2">
-              {connectLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+          {/* セクション別リンク（taxonomy.ts から自動生成） */}
+          {sections.map(({ key, labelEn, links }) => (
+            <div key={key}>
+              <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">{labelEn}</p>
+              <nav className="space-y-2">
+                {links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          ))}
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

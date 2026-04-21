@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { Spot, SpotArea } from '@/lib/types'
+import type { Spot } from '@/lib/types'
+import type { Area } from '@/lib/taxonomy'
+import { areaMaster } from '@/lib/taxonomy'
 import AreaFilter from '@/components/spot/AreaFilter'
-import { areaConfig } from '@/components/spot/AreaBadge'
 
 type StayType = 'all' | 'hotel' | 'minshuku' | 'camp'
 
@@ -34,7 +35,7 @@ function CheckIcon({ ok }: { ok?: boolean | null }) {
 }
 
 function StayCard({ spot }: { spot: Spot }) {
-  const areaLabel = spot.area ? (areaConfig[spot.area]?.label ?? spot.area) : null
+  const areaConf = spot.area ? areaMaster[spot.area] : null
 
   return (
     <Link href={`/spot/${spot.slug}`} className="group block">
@@ -57,13 +58,12 @@ function StayCard({ spot }: { spot: Spot }) {
         <div className="flex flex-col justify-between flex-1 min-w-0 p-5">
           <div>
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              {areaLabel && (
-                <span className="text-[11px] px-2 py-0.5 rounded font-medium"
-                  style={{
-                    backgroundColor: spot.area ? areaConfig[spot.area]?.bg : '#f0f0f0',
-                    color: spot.area ? areaConfig[spot.area]?.text : '#666',
-                  }}>
-                  {areaLabel}
+              {areaConf && (
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded font-medium"
+                  style={{ backgroundColor: areaConf.bg, color: areaConf.text }}
+                >
+                  {areaConf.shortLabel}
                 </span>
               )}
             </div>
@@ -114,7 +114,7 @@ interface Props {
 }
 
 export default function StayListWithFilters({ spots }: Props) {
-  const [area, setArea] = useState<SpotArea | 'all'>('all')
+  const [area, setArea] = useState<Area | 'all'>('all')
   const [stayType, setStayType] = useState<StayType>('all')
 
   const filtered = spots.filter((s) => {
@@ -182,37 +182,40 @@ export default function StayListWithFilters({ spots }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {spots.map((spot, i) => (
-                  <tr key={spot.id} className={`border-b border-[#efefef] hover:bg-[#faf8f5] transition-colors ${i % 2 === 0 ? '' : 'bg-[#faf8f5]/40'}`}>
-                    <td className="py-3.5 pr-4">
-                      <Link href={`/spot/${spot.slug}`} className="font-medium text-[#1a1a1a] hover:text-[#5b7e95] transition-colors">
-                        {spot.name}
-                      </Link>
-                    </td>
-                    <td className="py-3.5 pr-4 text-[#5c5c5c]">
-                      {spot.area ? (areaConfig[spot.area]?.label ?? spot.area) : '—'}
-                    </td>
-                    <td className="py-3.5 pr-4 text-center"><CheckIcon ok={spot.has_onsen} /></td>
-                    <td className="py-3.5 pr-4 text-center"><CheckIcon ok={spot.has_meals} /></td>
-                    <td className="py-3.5 pr-4 text-[#5c5c5c]">{spot.price_range ?? '—'}</td>
-                    <td className="py-3.5">
-                      {spot.booking_url ? (
-                        <a href={spot.booking_url} target="_blank" rel="noopener noreferrer"
-                          className="text-[#5b7e95] hover:underline text-[12px]">予約サイト ↗</a>
-                      ) : spot.booking_phone ? (
-                        <a href={`tel:${spot.booking_phone}`} className="text-[#5c5c5c] text-[12px]">
-                          {spot.booking_phone}
-                        </a>
-                      ) : spot.phone ? (
-                        <a href={`tel:${spot.phone}`} className="text-[#5c5c5c] text-[12px]">
-                          {spot.phone}
-                        </a>
-                      ) : (
-                        <span className="text-[#d0d0d0]">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {spots.map((spot, i) => {
+                  const areaConf = spot.area ? areaMaster[spot.area] : null
+                  return (
+                    <tr key={spot.id} className={`border-b border-[#efefef] hover:bg-[#faf8f5] transition-colors ${i % 2 === 0 ? '' : 'bg-[#faf8f5]/40'}`}>
+                      <td className="py-3.5 pr-4">
+                        <Link href={`/spot/${spot.slug}`} className="font-medium text-[#1a1a1a] hover:text-[#5b7e95] transition-colors">
+                          {spot.name}
+                        </Link>
+                      </td>
+                      <td className="py-3.5 pr-4 text-[#5c5c5c]">
+                        {areaConf ? areaConf.shortLabel : '—'}
+                      </td>
+                      <td className="py-3.5 pr-4 text-center"><CheckIcon ok={spot.has_onsen} /></td>
+                      <td className="py-3.5 pr-4 text-center"><CheckIcon ok={spot.has_meals} /></td>
+                      <td className="py-3.5 pr-4 text-[#5c5c5c]">{spot.price_range ?? '—'}</td>
+                      <td className="py-3.5">
+                        {spot.booking_url ? (
+                          <a href={spot.booking_url} target="_blank" rel="noopener noreferrer"
+                            className="text-[#5b7e95] hover:underline text-[12px]">予約サイト ↗</a>
+                        ) : spot.booking_phone ? (
+                          <a href={`tel:${spot.booking_phone}`} className="text-[#5c5c5c] text-[12px]">
+                            {spot.booking_phone}
+                          </a>
+                        ) : spot.phone ? (
+                          <a href={`tel:${spot.phone}`} className="text-[#5c5c5c] text-[12px]">
+                            {spot.phone}
+                          </a>
+                        ) : (
+                          <span className="text-[#d0d0d0]">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -12,17 +12,20 @@ export const metadata: Metadata = {
   alternates: { canonical: `${BASE_URL}/travel/stay` },
 }
 
-const stayCategories = ['accommodation', 'hotel', '旅館', 'minshuku', '民宿', 'キャンプ', 'campground', '宿泊']
-
 export default async function StayPage() {
   const { data: spots } = await supabase
     .from('spots')
     .select('*')
     .eq('status', 'public')
-    .in('category', stayCategories)
+    .eq('section', 'travel')
+    .or('primary_category.eq.stay,sub_categories.cs.{stay}')
     .order('created_at', { ascending: false })
 
-  const list = (spots ?? []) as Spot[]
+  const list = ((spots ?? []) as Spot[]).sort((a, b) => {
+    const ao = (a.spot_order?.stay) ?? 999
+    const bo = (b.spot_order?.stay) ?? 999
+    return ao - bo
+  })
 
   return (
     <>
@@ -73,7 +76,7 @@ export default async function StayPage() {
             <div className="py-20 text-center">
               <p className="text-[#8a8a8a] text-[14px] mb-2">宿泊施設情報を準備中です。</p>
               <p className="text-[#8a8a8a] text-[13px]">
-                スポット登録は管理画面から。category = <code className="bg-[#faf8f5] px-1.5 py-0.5 rounded text-[12px]">accommodation</code> を設定してください。
+                スポット登録は管理画面から。primary_category = <code className="bg-[#faf8f5] px-1.5 py-0.5 rounded text-[12px]">stay</code> を設定してください。
               </p>
             </div>
           ) : (

@@ -160,29 +160,49 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
   const slug = str('slug') ?? ''
   if (!slug) return { error: 'スラッグは必須です。' }
 
+  const section = str('section') ?? 'travel'
+  const primaryCategory = str('primary_category') ?? ''
+  if (!primaryCategory) return { error: 'プライマリカテゴリは必須です。' }
+
+  // サブカテゴリ（複数）
+  const subCategories = (formData.getAll('sub_categories') as string[])
+    .filter((v) => v !== primaryCategory) // プライマリと重複しない
+
+  // 並び順（JSONB）: spot_order[key] という名前のフィールドを収集
+  const spotOrder: Record<string, number> = {}
+  for (const [key, value] of formData.entries()) {
+    const match = key.match(/^spot_order\[(.+)\]$/)
+    if (match && value) {
+      const parsed = parseInt(value as string, 10)
+      if (!isNaN(parsed)) spotOrder[match[1]] = parsed
+    }
+  }
+
   const payload = {
-    name:           str('name') ?? '',
+    name:             str('name') ?? '',
     slug,
-    section:        str('section') ?? '',
-    category:       str('category') ?? '',
-    area:           str('area'),
-    description:    str('description'),
-    address:        str('address'),
-    phone:          str('phone'),
-    business_hours: str('business_hours'),
-    holidays:       str('holidays'),
-    latitude:       num('latitude'),
-    longitude:      num('longitude'),
-    cover_image:    str('cover_image'),
-    price_range:    str('price_range'),
-    has_onsen:      bool('has_onsen'),
-    has_meals:      bool('has_meals'),
-    booking_url:    str('booking_url'),
-    booking_phone:  str('booking_phone'),
-    room_count:     int('room_count'),
-    capacity:       int('capacity'),
-    website:        str('website'),
-    updated_at:     new Date().toISOString(),
+    section,
+    primary_category: primaryCategory,
+    sub_categories:   subCategories,
+    spot_order:       spotOrder,
+    area:             str('area'),
+    description:      str('description'),
+    address:          str('address'),
+    phone:            str('phone'),
+    business_hours:   str('business_hours'),
+    holidays:         str('holidays'),
+    latitude:         num('latitude'),
+    longitude:        num('longitude'),
+    cover_image:      str('cover_image'),
+    price_range:      str('price_range'),
+    has_onsen:        bool('has_onsen'),
+    has_meals:        bool('has_meals'),
+    booking_url:      str('booking_url'),
+    booking_phone:    str('booking_phone'),
+    room_count:       int('room_count'),
+    capacity:         int('capacity'),
+    website:          str('website'),
+    updated_at:       new Date().toISOString(),
   }
 
   if (!payload.name) return { error: '名前は必須です。' }
@@ -209,23 +229,28 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
 // ── スポット新規作成（adminフォーム用）────────────────────
 export async function createSpot(_prev: unknown, formData: FormData) {
   await assertAdmin()
-  const uid = await getSessionUserId()
+
+  const primaryCategory = (formData.get('primary_category') as string) || ''
+  const subCategories = (formData.getAll('sub_categories') as string[])
+    .filter((v) => v !== primaryCategory)
 
   const payload = {
-    name: formData.get('name') as string,
-    slug: formData.get('slug') as string,
-    section: formData.get('section') as string,
-    category: formData.get('category') as string,
-    area: formData.get('area') as string,
-    description: (formData.get('description') as string) || null,
-    address: (formData.get('address') as string) || null,
-    phone: (formData.get('phone') as string) || null,
-    business_hours: (formData.get('business_hours') as string) || null,
-    holidays: (formData.get('holidays') as string) || null,
-    status: 'public',
+    name:             formData.get('name') as string,
+    slug:             formData.get('slug') as string,
+    section:          formData.get('section') as string,
+    primary_category: primaryCategory,
+    sub_categories:   subCategories,
+    spot_order:       {},
+    area:             (formData.get('area') as string) || null,
+    description:      (formData.get('description') as string) || null,
+    address:          (formData.get('address') as string) || null,
+    phone:            (formData.get('phone') as string) || null,
+    business_hours:   (formData.get('business_hours') as string) || null,
+    holidays:         (formData.get('holidays') as string) || null,
+    status:           'public',
   }
 
-  if (!payload.name || !payload.slug || !payload.section || !payload.category || !payload.area) {
+  if (!payload.name || !payload.slug || !payload.section || !payload.primary_category) {
     return { error: '必須項目を入力してください。' }
   }
 

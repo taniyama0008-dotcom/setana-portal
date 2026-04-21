@@ -1,24 +1,25 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import type { Spot } from '@/lib/types'
 import { updateSpot } from '@/app/actions/admin'
+import { categoryMaster, areaMaster, getCategoriesForSection, type Section } from '@/lib/taxonomy'
 
 const inputClass =
   'w-full bg-white border border-[#e0e0e0] rounded-[6px] px-3 py-2.5 text-[14px] text-[#1a1a1a] focus:outline-none focus:border-[#5b7e95] transition-colors'
 const labelClass = 'block text-[12px] font-medium text-[#5c5c5c] mb-1.5'
 
-const areaOptions = [
-  { value: '',       label: '未設定' },
-  { value: '瀬棚区',   label: '瀬棚区' },
-  { value: '北檜山区', label: '北檜山区' },
-  { value: '大成区',   label: '大成区' },
+const sectionOptions: { value: Section; label: string }[] = [
+  { value: 'travel',  label: '旅する' },
+  { value: 'life',    label: '暮らす' },
+  { value: 'connect', label: '関わる' },
 ]
 
-const sectionOptions = [
-  { value: 'kurashi', label: '暮らし' },
-  { value: 'shoku',   label: '食' },
-  { value: 'shizen',  label: '自然' },
+const areaOptions = [
+  { value: '',           label: '未設定' },
+  { value: 'setana',     label: '瀬棚区' },
+  { value: 'kitahiyama', label: '北檜山区' },
+  { value: 'taisei',     label: '大成区' },
 ]
 
 interface BizUser {
@@ -37,6 +38,28 @@ export default function SpotEditForm({
   assignedUserId: string | null
 }) {
   const [state, action, isPending] = useActionState(updateSpot, null)
+  const [selectedSection, setSelectedSection] = useState<Section>(spot.section)
+  const [subCategories, setSubCategories] = useState<string[]>(spot.sub_categories ?? [])
+
+  const categoryEntries = getCategoriesForSection(selectedSection)
+
+  // セクションが変わったらサブカテゴリをリセット
+  function handleSectionChange(newSection: Section) {
+    setSelectedSection(newSection)
+    setSubCategories([])
+  }
+
+  function toggleSubCategory(key: string) {
+    setSubCategories((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
+  }
+
+  // 現在有効なカテゴリ（primary + sub）— spot_order 入力対象
+  const activeCategoryKeys = [
+    spot.primary_category,
+    ...subCategories,
+  ].filter(Boolean)
 
   return (
     <form action={action} className="space-y-8">
@@ -68,43 +91,103 @@ export default function SpotEditForm({
             <p className="text-[11px] text-[#8a8a8a] mt-1">/spot/{spot.slug}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>セクション <span className="text-[#d94f4f]">*</span></label>
-              <select name="section" defaultValue={spot.section} className={inputClass}>
-                {sectionOptions.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>エリア</label>
-              <select name="area" defaultValue={spot.area ?? ''} className={inputClass}>
-                {areaOptions.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className={labelClass}>カテゴリ</label>
-            <select name="category" defaultValue={spot.category ?? ''} className={inputClass}>
-              <option value="">未設定</option>
-              <option value="gourmet">グルメ・飲食</option>
-              <option value="nature">観光・自然</option>
-              <option value="onsen">温泉</option>
-              <option value="stay">宿泊</option>
-              <option value="activity">遊ぶ・体験</option>
-              <option value="shop">買い物</option>
-              <option value="facility">公共施設</option>
-            </select>
-          </div>
-
           <div>
             <label className={labelClass}>説明文</label>
             <textarea name="description" defaultValue={spot.description ?? ''} rows={5} className={`${inputClass} resize-none leading-[1.8]`} />
           </div>
+        </div>
+      </section>
+
+      {/* ── 分類 ── */}
+      <section>
+        <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-4">分類</h2>
+        <div className="space-y-5">
+
+          {/* セクション */}
+          <div>
+            <label className={labelClass}>セクション <span className="text-[#d94f4f]">*</span></label>
+            <div className="flex gap-3 flex-wrap">
+              {sectionOptions.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="section"
+                    value={opt.value}
+                    checked={selectedSection === opt.value}
+                    onChange={() => handleSectionChange(opt.value)}
+                    className="accent-[#5b7e95]"
+                  />
+                  <span className="text-[14px] text-[#1a1a1a]">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* プライマリカテゴリ */}
+          <div>
+            <label className={labelClass}>プライマリカテゴリ <span className="text-[#d94f4f]">*</span></label>
+            <select name="primary_category" defaultValue={spot.primary_category} className={inputClass}>
+              {categoryEntries.map(([key, entry]) => (
+                <option key={key} value={key}>{entry.label}</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-[#8a8a8a] mt-1">一覧ページのメイン分類に使われます。</p>
+          </div>
+
+          {/* サブカテゴリ（複数選択） */}
+          <div>
+            <label className={labelClass}>サブカテゴリ（複数選択可）</label>
+            <div className="flex flex-wrap gap-x-5 gap-y-2.5 border border-[#e0e0e0] rounded-[6px] p-3 bg-[#faf8f5]">
+              {categoryEntries.map(([key, entry]) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="sub_categories"
+                    value={key}
+                    checked={subCategories.includes(key)}
+                    onChange={() => toggleSubCategory(key)}
+                    className="accent-[#5b7e95]"
+                  />
+                  <span className="text-[13px] text-[#1a1a1a]">{entry.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#8a8a8a] mt-1">例：温泉宿なら「泊まる」＋「温泉」にチェック。</p>
+          </div>
+
+          {/* エリア */}
+          <div>
+            <label className={labelClass}>エリア</label>
+            <select name="area" defaultValue={spot.area ?? ''} className={inputClass}>
+              {areaOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 並び順 ── */}
+      <section>
+        <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-4">並び順</h2>
+        <p className="text-[12px] text-[#8a8a8a] mb-3">各カテゴリ一覧での表示順。小さい数値が先頭。未入力は末尾。</p>
+        <div className="grid grid-cols-2 gap-3">
+          {activeCategoryKeys.map((catKey) => {
+            const catLabel = (categoryMaster[selectedSection]?.categories as Record<string, { label: string }>)?.[catKey]?.label ?? catKey
+            return (
+              <div key={catKey}>
+                <label className={labelClass}>{catLabel}</label>
+                <input
+                  name={`spot_order[${catKey}]`}
+                  type="number"
+                  min="0"
+                  defaultValue={spot.spot_order?.[catKey] ?? ''}
+                  placeholder="未設定（末尾）"
+                  className={inputClass}
+                />
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -184,21 +267,11 @@ export default function SpotEditForm({
           </div>
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="has_onsen"
-                defaultChecked={spot.has_onsen ?? false}
-                className="w-4 h-4 accent-[#5b7e95]"
-              />
+              <input type="checkbox" name="has_onsen" defaultChecked={spot.has_onsen ?? false} className="w-4 h-4 accent-[#5b7e95]" />
               <span className="text-[14px] text-[#1a1a1a]">温泉あり</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="has_meals"
-                defaultChecked={spot.has_meals ?? false}
-                className="w-4 h-4 accent-[#5b7e95]"
-              />
+              <input type="checkbox" name="has_meals" defaultChecked={spot.has_meals ?? false} className="w-4 h-4 accent-[#5b7e95]" />
               <span className="text-[14px] text-[#1a1a1a]">食事あり</span>
             </label>
           </div>

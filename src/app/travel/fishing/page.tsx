@@ -61,13 +61,19 @@ const safetyTips = [
 ]
 
 export default async function FishingPage() {
-  const [{ data: fishingSpots }, { data: shopSpots }] = await Promise.all([
-    supabase.from('spots').select('*').eq('status', 'public').eq('category', 'fishing').order('created_at', { ascending: false }),
-    supabase.from('spots').select('*').eq('status', 'public').eq('category', 'fishing_shop').order('created_at', { ascending: false }),
-  ])
+  const { data: fishingSpots } = await supabase
+    .from('spots')
+    .select('*')
+    .eq('status', 'public')
+    .eq('section', 'travel')
+    .or('primary_category.eq.fishing,sub_categories.cs.{fishing}')
+    .order('created_at', { ascending: false })
 
-  const spots = (fishingSpots ?? []) as Spot[]
-  const shops = (shopSpots ?? []) as Spot[]
+  const spots = ((fishingSpots ?? []) as Spot[]).sort((a, b) => {
+    const ao = (a.spot_order?.fishing) ?? 999
+    const bo = (b.spot_order?.fishing) ?? 999
+    return ao - bo
+  })
 
   return (
     <>
@@ -156,13 +162,13 @@ export default async function FishingPage() {
             <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.2em] nav-label">SPOTS</p>
             <div className="flex-1 h-px bg-[#efefef]" />
           </div>
-          <h2 className="text-[#1a1a1a] text-[22px] font-bold mb-8 tracking-[0.02em]">釣りスポット</h2>
+          <h2 className="text-[#1a1a1a] text-[22px] font-bold mb-8 tracking-[0.02em]">釣りスポット・釣具店</h2>
 
           {spots.length === 0 ? (
             <div className="bg-[#faf8f5] rounded-[10px] p-8 text-center">
               <p className="text-[#8a8a8a] text-[14px] mb-2">釣りスポット情報を準備中です。</p>
               <p className="text-[#8a8a8a] text-[12px]">
-                管理画面から category = <code className="bg-white px-1.5 py-0.5 rounded">fishing</code> で登録してください。
+                管理画面から primary_category = <code className="bg-white px-1.5 py-0.5 rounded">fishing</code> で登録してください。
               </p>
             </div>
           ) : (
@@ -172,38 +178,6 @@ export default async function FishingPage() {
               ))}
             </div>
           )}
-        </section>
-
-        {/* 釣具店 */}
-        <section className="py-16 lg:py-20 border-b border-[#efefef]">
-          <div className="flex items-baseline gap-4 mb-10">
-            <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.2em] nav-label">TACKLE SHOPS</p>
-            <div className="flex-1 h-px bg-[#efefef]" />
-          </div>
-          <h2 className="text-[#1a1a1a] text-[22px] font-bold mb-3 tracking-[0.02em]">釣具店・関連施設</h2>
-          <p className="text-[14px] text-[#5c5c5c] leading-[1.8] mb-8">せたな町には釣具専門店が2軒あります。仕掛け・餌の入手、ポイント情報などはお気軽にどうぞ。</p>
-
-          {shops.length === 0 ? (
-            <div className="bg-[#faf8f5] rounded-[10px] p-8 text-center">
-              <p className="text-[#8a8a8a] text-[14px] mb-2">釣具店情報を準備中です。</p>
-              <p className="text-[#8a8a8a] text-[12px]">
-                管理画面から category = <code className="bg-white px-1.5 py-0.5 rounded">fishing_shop</code> で登録してください。
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {shops.map((spot) => (
-                <SpotCard key={spot.id} spot={spot} />
-              ))}
-            </div>
-          )}
-
-          <div className="mt-10 p-5 bg-[#faf8f5] rounded-[10px] border border-[#efefef]">
-            <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">
-              🎣 釣りの後は温泉で疲れを癒しませんか？
-              <Link href="/travel/stay" className="text-[#5b7e95] hover:underline ml-2">温泉・宿泊情報 →</Link>
-            </p>
-          </div>
         </section>
 
         {/* ルール・マナー */}

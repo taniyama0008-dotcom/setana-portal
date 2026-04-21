@@ -4,44 +4,34 @@ import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import { getSessionUserId } from '@/lib/session'
 import type { Spot, SpotImage } from '@/lib/types'
+import { categoryMaster, sectionBadge, areaMaster, getCategoryLabel, getCategoryPath, type Section } from '@/lib/taxonomy'
 import ReviewSection from '@/components/reviews/ReviewSection'
 import RelatedSpots from '@/components/spot/RelatedSpots'
-import AreaBadge, { areaConfig } from '@/components/spot/AreaBadge'
+import AreaBadge from '@/components/spot/AreaBadge'
 import SpotGallery from '@/components/spot/SpotGallery'
 import FavoriteButton from '@/components/spot/FavoriteButton'
 import ShareButtons from '@/components/spot/ShareButtons'
 
 const BASE_URL = 'https://www.setana.life'
 
-const sectionBadge = {
-  kurashi: { label: '暮らし', bgClass: 'bg-[#5b7e95]', gradient: 'from-[#5b7e95] to-[#3d5a6e]' },
-  shoku:   { label: '食',     bgClass: 'bg-[#c47e4f]', gradient: 'from-[#c47e4f] to-[#a5663a]' },
-  shizen:  { label: '自然',   bgClass: 'bg-[#6b8f71]', gradient: 'from-[#6b8f71] to-[#4a6b50]' },
-}
+/** taxonomy.ts を参照してパンくず用の trail を解決 */
+function resolveTrailRoute(spot: Spot): { href: string; label: string; sectionHref: string; sectionLabel: string } {
+  const section = spot.section as Section
+  const catPath  = getCategoryPath(section, spot.primary_category)
+  const catLabel = getCategoryLabel(section, spot.primary_category)
+  const secData  = categoryMaster[section]
 
-const onsenCategories  = ['温泉', 'onsen', '日帰り温泉', '温泉施設']
-const stayCategories   = ['宿泊', 'accommodation', 'ホテル', '旅館', 'キャンプ', '民宿']
-
-function resolveTrailRoute(spot: Spot): { href: string; label: string } {
-  const cat = spot.category?.toLowerCase() ?? ''
-  if (onsenCategories.some(k => cat.includes(k) || spot.category === k))
-    return { href: '/travel/onsen', label: '温泉' }
-  if (stayCategories.some(k => cat.includes(k) || spot.category === k))
-    return { href: '/travel/stay', label: '泊まる' }
-  if (spot.section === 'shoku')   return { href: '/travel/gourmet', label: 'グルメ' }
-  if (spot.section === 'shizen')  return { href: '/travel/nature', label: '観光・自然' }
-  if (spot.section === 'kurashi') return { href: '/life/living', label: '暮らしのリアル' }
-  return { href: '/travel', label: '旅する' }
-}
-
-function resolveParentHref(trail: { href: string }): string {
-  if (trail.href.startsWith('/travel')) return '/travel'
-  if (trail.href.startsWith('/life')) return '/life'
-  return '/'
+  return {
+    sectionHref:  secData?.topHref  ?? `/${section}`,
+    sectionLabel: secData?.label    ?? section,
+    href:         catPath  ?? `/${section}`,
+    label:        catLabel ?? spot.primary_category,
+  }
 }
 
 function buildJsonLd(spot: Spot) {
-  const type = spot.section === 'shoku' ? 'Restaurant' : 'TouristAttraction'
+  // グルメカテゴリなら Restaurant、それ以外は TouristAttraction
+  const type = spot.primary_category === 'gourmet' ? 'Restaurant' : 'TouristAttraction'
   return {
     '@context': 'https://schema.org',
     '@type': type,
@@ -57,17 +47,15 @@ function buildJsonLd(spot: Spot) {
   }
 }
 
-function buildBreadcrumbJsonLd(spot: Spot, trail: { href: string; label: string }) {
-  const parentHref = resolveParentHref(trail)
-  const parentLabel = parentHref === '/travel' ? '旅する' : '暮らす'
+function buildBreadcrumbJsonLd(spot: Spot, trail: ReturnType<typeof resolveTrailRoute>) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'ホーム', item: BASE_URL },
-      { '@type': 'ListItem', position: 2, name: parentLabel, item: `${BASE_URL}${parentHref}` },
-      { '@type': 'ListItem', position: 3, name: trail.label, item: `${BASE_URL}${trail.href}` },
-      { '@type': 'ListItem', position: 4, name: spot.name, item: `${BASE_URL}/spot/${spot.slug}` },
+      { '@type': 'ListItem', position: 1, name: 'ホーム',               item: BASE_URL },
+      { '@type': 'ListItem', position: 2, name: trail.sectionLabel,     item: `${BASE_URL}${trail.sectionHref}` },
+      { '@type': 'ListItem', position: 3, name: trail.label,            item: `${BASE_URL}${trail.href}` },
+      { '@type': 'ListItem', position: 4, name: spot.name,              item: `${BASE_URL}/spot/${spot.slug}` },
     ],
   }
 }
@@ -91,9 +79,10 @@ export async function generateMetadata({
   const spot = await getSpot(slug)
   if (!spot) return { title: 'スポットが見つかりません' }
 
+  const catLabel = getCategoryLabel(spot.section as Section, spot.primary_category) ?? ''
   const description =
     spot.description?.slice(0, 120) ??
-    `せたな町${spot.category ? `の${spot.category}` : ''}スポット「${spot.name}」の情報ページ。`
+    `せたな町${catLabel ? `の${catLabel}` : ''}スポット「${spot.name}」の情報ページ。`
 
   return {
     title: spot.name,
@@ -132,7 +121,6 @@ export default async function SpotPage({
   const spot = await getSpot(slug)
   if (!spot) notFound()
 
-  // 並行データ取得
   const [{ data: spotImagesRaw }, userId] = await Promise.all([
     supabase
       .from('spot_images')
@@ -142,7 +130,6 @@ export default async function SpotPage({
     getSessionUserId(),
   ])
 
-  // お気に入り状態
   let isFavorited = false
   if (userId) {
     const { data: fav } = await supabase
@@ -155,13 +142,17 @@ export default async function SpotPage({
   }
 
   const spotImages = (spotImagesRaw ?? []) as SpotImage[]
-  const sec     = sectionBadge[spot.section]
-  const trail   = resolveTrailRoute(spot)
-  const parent  = resolveParentHref(trail)
-  const parentLabel = parent === '/travel' ? '旅する' : '暮らす'
+  const sec    = sectionBadge[spot.section as Section] ?? sectionBadge.travel
+  const trail  = resolveTrailRoute(spot)
   const hasBasicInfo = spot.address || spot.phone || spot.business_hours || spot.holidays || spot.area
   const hasMap = spot.latitude !== null && spot.longitude !== null
   const pageUrl = `${BASE_URL}/spot/${spot.slug}`
+
+  // 全カテゴリラベル（プライマリ + サブ）
+  const allCategoryLabels = [spot.primary_category, ...(spot.sub_categories ?? [])]
+    .map((k) => getCategoryLabel(spot.section as Section, k))
+    .filter(Boolean)
+    .join('・')
 
   return (
     <>
@@ -177,11 +168,11 @@ export default async function SpotPage({
       />
 
       <div className="max-w-[860px] mx-auto px-5 lg:px-8">
-        {/* パンくずリスト */}
+        {/* パンくずリスト: ホーム > セクション > カテゴリ > スポット名 */}
         <nav className="py-5 flex items-center gap-1.5 text-[12px] text-[#8a8a8a] nav-label flex-wrap" aria-label="パンくずリスト">
           <Link href="/" className="hover:text-[#1a1a1a] transition-colors">ホーム</Link>
           <span>/</span>
-          <Link href={parent} className="hover:text-[#1a1a1a] transition-colors">{parentLabel}</Link>
+          <Link href={trail.sectionHref} className="hover:text-[#1a1a1a] transition-colors">{trail.sectionLabel}</Link>
           <span>/</span>
           <Link href={trail.href} className="hover:text-[#1a1a1a] transition-colors">{trail.label}</Link>
           <span>/</span>
@@ -195,12 +186,11 @@ export default async function SpotPage({
               {sec.label}
             </span>
             <AreaBadge area={spot.area} />
-            {spot.category && (
-              <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">{spot.category}</span>
+            {allCategoryLabels && (
+              <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">{allCategoryLabels}</span>
             )}
           </div>
 
-          {/* タイトル行 */}
           <div className="flex items-start gap-3 mb-5">
             <h1 className="flex-1 text-[28px] lg:text-[32px] font-bold text-[#1a1a1a] leading-[1.4] tracking-[0.02em]">
               {spot.name}
@@ -215,7 +205,6 @@ export default async function SpotPage({
             </div>
           </div>
 
-          {/* SNSシェア */}
           <ShareButtons url={pageUrl} title={spot.name} />
         </header>
 
@@ -234,7 +223,7 @@ export default async function SpotPage({
             <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-6 tracking-[0.03em]">基本情報</h2>
             <table className="w-full">
               <tbody>
-                <InfoRow label="エリア" value={spot.area ? (areaConfig[spot.area]?.label ?? null) : null} />
+                <InfoRow label="エリア" value={spot.area ? (areaMaster[spot.area]?.label ?? null) : null} />
                 <InfoRow label="住所" value={spot.address} />
                 <InfoRow label="電話" value={spot.phone} />
                 <InfoRow label="営業時間" value={spot.business_hours} />
@@ -267,13 +256,14 @@ export default async function SpotPage({
           spotId={spot.id}
           slug={spot.slug}
           spotName={spot.name}
-          spotType={spot.section === 'shoku' ? 'Restaurant' : 'TouristAttraction'}
+          spotType={spot.primary_category === 'gourmet' ? 'Restaurant' : 'TouristAttraction'}
         />
 
         {/* 関連スポット */}
         <RelatedSpots
           currentSpotId={spot.id}
-          section={spot.section}
+          section={spot.section as Section}
+          primaryCategory={spot.primary_category}
           area={spot.area}
         />
 

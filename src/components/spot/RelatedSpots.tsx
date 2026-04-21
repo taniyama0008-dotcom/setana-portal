@@ -1,20 +1,23 @@
 import { supabase } from '@/lib/supabase'
-import type { Spot, SpotArea } from '@/lib/types'
+import type { Spot } from '@/lib/types'
+import type { Area, Section } from '@/lib/taxonomy'
 import SpotCard from './SpotCard'
 
 interface RelatedSpotsProps {
   currentSpotId: string
-  section: string
-  area: SpotArea | null
+  section: Section
+  primaryCategory: string
+  area: Area | null
 }
 
-export default async function RelatedSpots({ currentSpotId, section, area }: RelatedSpotsProps) {
-  // 1. 同じエリア × 同じセクション
+export default async function RelatedSpots({ currentSpotId, section, primaryCategory, area }: RelatedSpotsProps) {
+  // 1. 同じエリア × 同じプライマリカテゴリ
   const { data: sameAreaSpots } = await supabase
     .from('spots')
     .select('*')
     .eq('status', 'public')
     .eq('section', section)
+    .eq('primary_category', primaryCategory)
     .eq('area', area ?? '')
     .neq('id', currentSpotId)
     .limit(3)

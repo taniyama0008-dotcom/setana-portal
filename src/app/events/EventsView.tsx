@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { CalendarEvent } from '@/lib/types'
-import { areaConfig } from '@/components/spot/AreaBadge'
+import { areaMaster } from '@/lib/taxonomy'
 
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
 
@@ -24,7 +24,7 @@ function formatDate(start: string, end?: string | null): string {
 
 function EventItem({ event, past }: { event: CalendarEvent; past?: boolean }) {
   const sc = statusConfig[event.status] ?? statusConfig.upcoming
-  const areaLabel = event.area ? (areaConfig[event.area]?.label ?? event.area) : null
+  const areaLabel = event.area ? (areaMaster[event.area as keyof typeof areaMaster]?.label ?? event.area) : null
 
   return (
     <div className={`flex gap-5 py-6 border-b border-[#efefef] last:border-0 ${past ? 'opacity-50' : ''}`}>
@@ -50,8 +50,8 @@ function EventItem({ event, past }: { event: CalendarEvent; past?: boolean }) {
           {areaLabel && (
             <span className="text-[11px] px-2 py-0.5 rounded font-medium"
               style={{
-                backgroundColor: event.area ? areaConfig[event.area]?.bg : '#f0f0f0',
-                color: event.area ? areaConfig[event.area]?.text : '#666',
+                backgroundColor: event.area ? areaMaster[event.area as keyof typeof areaMaster]?.bg : '#f0f0f0',
+                color: event.area ? areaMaster[event.area as keyof typeof areaMaster]?.text : '#666',
               }}>
               {areaLabel}
             </span>

@@ -29,10 +29,15 @@ export default async function GourmetPage() {
     .from('spots')
     .select('*')
     .eq('status', 'public')
-    .eq('section', 'shoku')
+    .eq('section', 'travel')
+    .or('primary_category.eq.gourmet,sub_categories.cs.{gourmet}')
     .order('created_at', { ascending: false })
 
-  const list = (spots ?? []) as Spot[]
+  const list = ((spots ?? []) as Spot[]).sort((a, b) => {
+    const ao = (a.spot_order?.gourmet) ?? 999
+    const bo = (b.spot_order?.gourmet) ?? 999
+    return ao - bo
+  })
 
   return (
     <>

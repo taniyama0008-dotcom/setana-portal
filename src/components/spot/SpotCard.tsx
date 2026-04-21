@@ -1,33 +1,17 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Spot } from '@/lib/types'
+import { sectionBadge, formatSpotCategories } from '@/lib/taxonomy'
 import AreaBadge from './AreaBadge'
 import FavoriteButton from './FavoriteButton'
-
-const sectionConfig = {
-  kurashi: {
-    label: '暮らし',
-    bgClass: 'bg-[#5b7e95]',
-    gradient: 'from-[#5b7e95] to-[#3d5a6e]',
-  },
-  shoku: {
-    label: '食',
-    bgClass: 'bg-[#c47e4f]',
-    gradient: 'from-[#c47e4f] to-[#a5663a]',
-  },
-  shizen: {
-    label: '自然',
-    bgClass: 'bg-[#6b8f71]',
-    gradient: 'from-[#6b8f71] to-[#4a6b50]',
-  },
-}
 
 interface SpotCardProps {
   spot: Spot
 }
 
 export default function SpotCard({ spot }: SpotCardProps) {
-  const config = sectionConfig[spot.section]
+  const sec = sectionBadge[spot.section] ?? sectionBadge.travel
+  const categoryText = formatSpotCategories(spot.section, spot.primary_category, spot.sub_categories ?? [])
 
   return (
     <div className="relative group">
@@ -44,29 +28,26 @@ export default function SpotCard({ spot }: SpotCardProps) {
                 unoptimized
               />
             ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${config.gradient}`} />
+              <div className={`w-full h-full bg-gradient-to-br ${sec.gradient}`} />
             )}
           </div>
 
           {/* テキストエリア */}
           <div className="p-5 pb-6">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className={`inline-block px-2 py-0.5 rounded text-white text-[11px] font-medium ${config.bgClass}`}>
-                {config.label}
+              <span className={`inline-block px-2 py-0.5 rounded text-white text-[11px] font-medium ${sec.bgClass}`}>
+                {sec.label}
               </span>
               <AreaBadge area={spot.area} />
-              {spot.category && (
-                <span className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">
-                  {spot.category}
-                </span>
-              )}
             </div>
             <h3 className="text-[15px] font-medium text-[#1a1a1a] leading-snug mb-1">
               {spot.name}
             </h3>
-            <p className="text-[12px] text-[#8a8a8a] tracking-[0.04em]">
-              {spot.area}
-            </p>
+            {categoryText && (
+              <p className="text-[12px] text-[#8a8a8a] tracking-[0.04em] mb-0.5">
+                {categoryText}
+              </p>
+            )}
           </div>
         </article>
       </Link>

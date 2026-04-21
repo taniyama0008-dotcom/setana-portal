@@ -14,10 +14,15 @@ export default async function OnsenPage() {
     .from('spots')
     .select('*')
     .eq('status', 'public')
-    .eq('category', 'onsen')
+    .eq('section', 'travel')
+    .or('primary_category.eq.onsen,sub_categories.cs.{onsen}')
     .order('created_at', { ascending: false })
 
-  const list = (spots ?? []) as Spot[]
+  const list = ((spots ?? []) as Spot[]).sort((a, b) => {
+    const ao = (a.spot_order?.onsen) ?? 999
+    const bo = (b.spot_order?.onsen) ?? 999
+    return ao - bo
+  })
 
   return (
     <>
@@ -68,13 +73,11 @@ export default async function OnsenPage() {
             <div className="py-16 text-center">
               <p className="text-[#8a8a8a] text-[14px] mb-4">温泉スポット情報を準備中です。</p>
               <p className="text-[#8a8a8a] text-[13px]">
-                スポット登録は管理画面から行えます。category = <code className="bg-[#faf8f5] px-1.5 py-0.5 rounded text-[12px]">onsen</code> を設定してください。
+                スポット登録は管理画面から。primary_category = <code className="bg-[#faf8f5] px-1.5 py-0.5 rounded text-[12px]">onsen</code> を設定してください。
               </p>
             </div>
           ) : (
-            <>
-              <SpotListWithAreaFilter spots={list} />
-            </>
+            <SpotListWithAreaFilter spots={list} />
           )}
         </div>
       </section>

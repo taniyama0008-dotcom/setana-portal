@@ -1,17 +1,23 @@
-export type Section = 'kurashi' | 'shoku' | 'shizen'
-export type SpotStatus = 'public' | 'draft' | 'review'
+import type { Section, Area } from './taxonomy'
+
+export type { Section, Area }
+
+// 旧分類（article テーブルで継続使用）
+export type ArticleSection = 'kurashi' | 'shoku' | 'shizen'
+
+export type SpotStatus    = 'public' | 'draft' | 'review'
 export type ArticleStatus = 'public' | 'draft'
-export type Area = 'setana' | 'kitahiyama' | 'taisei'        // events テーブルの area 値
-export type SpotArea = '瀬棚区' | '北檜山区' | '大成区'         // spots テーブルの area 値
 export type ArticleCategory = 'story' | 'job_feature' | 'iju' | 'course' | 'special' | 'producer' | 'recipe' | 'guide'
 
 export interface Spot {
   id: string
   name: string
   slug: string
-  section: Section
-  category: string
-  area: SpotArea | null
+  section: Section               // 'travel' | 'life' | 'connect'
+  primary_category: string       // セクション配下のカテゴリキー（必須）
+  sub_categories: string[]       // 複数カテゴリ（同セクション内）
+  spot_order: Record<string, number> // カテゴリキー→表示順（未設定は末尾）
+  area: Area | null              // 'setana' | 'kitahiyama' | 'taisei'
   description: string | null
   address: string | null
   phone: string | null
@@ -24,7 +30,7 @@ export interface Spot {
   status: SpotStatus
   created_at: string
   updated_at: string
-  // 宿泊用拡張フィールド（ALTER TABLE spots ADD COLUMN で追加）
+  // 宿泊・施設拡張フィールド
   price_range?: string | null
   has_onsen?: boolean | null
   has_meals?: boolean | null
@@ -157,7 +163,7 @@ export interface Article {
   id: string
   title: string
   slug: string
-  section: Section
+  section: ArticleSection
   category: ArticleCategory
   content: string | null
   excerpt: string | null
