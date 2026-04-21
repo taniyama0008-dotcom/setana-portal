@@ -41,7 +41,6 @@ const jsonLd = {
 }
 
 const ORANGE = '#e07038'
-const ORANGE_DARK = '#b85a28'
 
 const features = [
   {
@@ -112,10 +111,7 @@ export default function FamimatchPage() {
               href="https://www.famimatch.jp/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-7 py-4 text-white text-[15px] font-bold rounded-[8px] transition-colors min-h-[52px]"
-              style={{ backgroundColor: ORANGE }}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = ORANGE_DARK)}
-              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = ORANGE)}
+              className="inline-flex items-center gap-2 px-7 py-4 text-white text-[15px] font-bold rounded-[8px] transition-colors min-h-[52px] bg-[#e07038] hover:bg-[#b85a28]"
             >
               ファミマッチを開く
               <span className="text-[12px] opacity-80">↗</span>
