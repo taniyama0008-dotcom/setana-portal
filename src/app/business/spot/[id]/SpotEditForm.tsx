@@ -1,7 +1,6 @@
 'use client'
 
 import { useActionState } from 'react'
-import Image from 'next/image'
 import { updateSpotInfo } from '@/app/actions/business'
 
 interface SpotEditFormProps {
@@ -48,27 +47,12 @@ export default function SpotEditForm({ spot }: SpotEditFormProps) {
         <p className="text-[11px] text-[#8a8a8a] mt-1">店舗名の変更は管理者にお問い合わせください。</p>
       </div>
 
-      {/* カバー画像 */}
+      {/* カバー画像（編集不可） */}
+      <input type="hidden" name="cover_image" value={spot.cover_image ?? ''} />
       <div>
-        <label className={labelClass}>カバー画像 URL</label>
-        {spot.cover_image && (
-          <div className="mb-3 relative h-[120px] w-full max-w-[320px] rounded-md overflow-hidden border border-[#e0e0e0]">
-            <Image
-              src={spot.cover_image}
-              alt={spot.name}
-              fill
-              className="object-cover"
-              unoptimized
-            />
-          </div>
-        )}
-        <input
-          name="cover_image"
-          defaultValue={spot.cover_image ?? ''}
-          className={inputClass}
-          placeholder="https://... （画像の URL を貼り付け）"
-          type="url"
-        />
+        <p className="text-[13px] text-[#8a8a8a] bg-[#faf8f5] border border-[#e0e0e0] rounded-md px-4 py-3">
+          カバー画像は管理者が画像管理から設定します。
+        </p>
       </div>
 
       <div>

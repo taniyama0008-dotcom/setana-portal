@@ -10,11 +10,19 @@ export default async function SpotEditPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { data: spot } = await supabaseAdmin
-    .from('spots')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [{ data: spot }, { data: bizUsers }, { data: assignment }] = await Promise.all([
+    supabaseAdmin.from('spots').select('*').eq('id', id).single(),
+    supabaseAdmin
+      .from('users')
+      .select('id, nickname, email')
+      .eq('role', 'business')
+      .order('nickname'),
+    supabaseAdmin
+      .from('business_spots')
+      .select('user_id')
+      .eq('spot_id', id)
+      .maybeSingle(),
+  ])
 
   if (!spot) notFound()
 
@@ -29,7 +37,11 @@ export default async function SpotEditPage({
         <h1 className="text-[22px] font-bold text-[#1a1a1a] tracking-[0.02em]">スポット編集</h1>
         <p className="text-[13px] text-[#8a8a8a] mt-1">{spot.name}</p>
       </div>
-      <SpotEditForm spot={spot as Spot} />
+      <SpotEditForm
+        spot={spot as Spot}
+        businessUsers={bizUsers ?? []}
+        assignedUserId={assignment?.user_id ?? null}
+      />
     </div>
   )
 }

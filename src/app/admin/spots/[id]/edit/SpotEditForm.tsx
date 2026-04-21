@@ -21,7 +21,21 @@ const sectionOptions = [
   { value: 'shizen',  label: '自然' },
 ]
 
-export default function SpotEditForm({ spot }: { spot: Spot }) {
+interface BizUser {
+  id: string
+  nickname: string | null
+  email: string | null
+}
+
+export default function SpotEditForm({
+  spot,
+  businessUsers,
+  assignedUserId,
+}: {
+  spot: Spot
+  businessUsers: BizUser[]
+  assignedUserId: string | null
+}) {
   const [state, action, isPending] = useActionState(updateSpot, null)
 
   return (
@@ -196,6 +210,23 @@ export default function SpotEditForm({ spot }: { spot: Spot }) {
       <section>
         <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-4">カバー画像</h2>
         <p className="text-[13px] text-[#5c5c5c]">カバー画像は「画像管理」から自動設定されます。</p>
+      </section>
+
+      {/* ── 事業者割り当て ── */}
+      <section>
+        <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-4">事業者割り当て</h2>
+        <div>
+          <label className={labelClass}>担当事業者</label>
+          <select name="business_user_id" defaultValue={assignedUserId ?? ''} className={inputClass}>
+            <option value="">未割り当て</option>
+            {businessUsers.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nickname ?? u.email ?? u.id}
+              </option>
+            ))}
+          </select>
+          <p className="text-[11px] text-[#8a8a8a] mt-1">選択すると、事業者がこのスポットの管理画面にアクセスできます。</p>
+        </div>
       </section>
 
       {/* 保存ボタン */}

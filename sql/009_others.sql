@@ -26,6 +26,9 @@ CREATE POLICY "business_spots_read" ON business_spots
   FOR SELECT TO authenticated
   USING (true);
 
+CREATE POLICY "Admin can manage business_spots" ON business_spots
+  FOR ALL USING (true) WITH CHECK (true);
+
 CREATE INDEX IF NOT EXISTS idx_business_spots_user_id ON business_spots (user_id);
 CREATE INDEX IF NOT EXISTS idx_business_spots_spot_id ON business_spots (spot_id);
 

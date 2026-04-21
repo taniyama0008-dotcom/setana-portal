@@ -193,6 +193,14 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
     return { error: `更新に失敗しました: ${error.message}` }
   }
 
+  // 事業者割り当て
+  const businessUserId = str('business_user_id')
+  if (businessUserId) {
+    await supabaseAdmin
+      .from('business_spots')
+      .upsert({ user_id: businessUserId, spot_id: id }, { onConflict: 'user_id,spot_id' })
+  }
+
   revalidatePath('/admin/spots')
   revalidatePath(`/spot/${slug}`)
   return { success: true }
