@@ -48,6 +48,45 @@ const travelCards = [
   },
 ]
 
+const connectCards = [
+  {
+    href: '/connect/furusato',
+    label: 'ふるさと納税',
+    labelEn: 'FURUSATO',
+    description: '返礼品と寄付金の使いみち、生産者の顔が見えるせたなのふるさと納税。',
+    gradient: 'from-[#4a7c6f] to-[#2d5a50]',
+    accent: '#4a7c6f',
+    large: true,
+  },
+  {
+    href: '/connect/corporate-furusato',
+    label: '企業版ふるさと納税',
+    labelEn: 'CORPORATE',
+    description: '法人による地域貢献。税制優遇と具体的な認定事業のご案内。',
+    gradient: 'from-[#3d5c6e] to-[#2a4050]',
+    accent: '#3d5c6e',
+    large: false,
+  },
+  {
+    href: '/connect/famimatch',
+    label: 'ファミマッチ',
+    labelEn: 'MATCH',
+    description: '町内の独身と町外の人をつなぐ、せたな町の出会いの広場。',
+    gradient: 'from-[#8a6b5b] to-[#5c4035]',
+    accent: '#8a6b5b',
+    large: false,
+  },
+  {
+    href: '/connect/relation',
+    label: '関係人口',
+    labelEn: 'RELATION',
+    description: '移住の前に、せたなと関わるもう一つの選択肢。',
+    gradient: 'from-[#6b8a72] to-[#4a6b50]',
+    accent: '#6b8a72',
+    large: false,
+  },
+]
+
 const lifeCards = [
   {
     href: '/life/work',
@@ -173,6 +212,12 @@ export default async function Home() {
             >
               暮らす →
             </Link>
+            <Link
+              href="/connect"
+              className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white text-[14px] font-medium rounded-[8px] transition-colors min-h-[48px] flex items-center border border-white/20"
+            >
+              関わる →
+            </Link>
           </div>
         </div>
       </section>
@@ -255,6 +300,55 @@ export default async function Home() {
                     className={`bg-gradient-to-br ${card.gradient} ${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
                   />
                   {/* テキストエリア */}
+                  <div className="p-6">
+                    <p className="text-[10px] font-medium tracking-[0.2em] mb-2 nav-label" style={{ color: card.accent }}>
+                      {card.labelEn}
+                    </p>
+                    <h3 className={`font-bold text-[#1a1a1a] tracking-[0.02em] mb-2 ${card.large ? 'text-[20px]' : 'text-[17px]'}`}>
+                      {card.label}
+                    </h3>
+                    <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">{card.description}</p>
+                    <p className="mt-4 text-[12px] font-medium transition-colors nav-label" style={{ color: card.accent }}>
+                      くわしく見る →
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── せたなに関わる ─────────────────────────────────── */}
+      <section className="bg-white py-20 lg:py-28 px-5 lg:px-8">
+        <div className="max-w-[1120px] mx-auto">
+          {/* セクションヘッダー */}
+          <div className="flex items-baseline gap-4 mb-12">
+            <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">CONNECT</p>
+            <div className="flex-1 h-px bg-[#e0e0e0]" />
+            <Link href="/connect" className="text-[#8a8a8a] text-[12px] hover:text-[#1a1a1a] transition-colors nav-label">
+              すべて見る →
+            </Link>
+          </div>
+          <h2 className="text-[#1a1a1a] text-[28px] lg:text-[36px] tracking-[0.02em] mb-3" style={{ fontWeight: 300 }}>
+            せたなに<span className="font-bold">関わる</span>
+          </h2>
+          <p className="text-[#5c5c5c] text-[14px] leading-[1.8] tracking-[0.06em] mb-12 max-w-[480px]">
+            旅でも暮らしでもなく、もっと気軽に。寄付・法人貢献・二拠点・マッチングで町とつながる方法。
+          </p>
+
+          {/* 4カード — ふるさと納税を最大化 */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+            {connectCards.map((card) => (
+              <Link
+                key={card.href}
+                href={card.href}
+                className={`group block ${card.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
+              >
+                <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+                  <div
+                    className={`bg-gradient-to-br ${card.gradient} ${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
+                  />
                   <div className="p-6">
                     <p className="text-[10px] font-medium tracking-[0.2em] mb-2 nav-label" style={{ color: card.accent }}>
                       {card.labelEn}

@@ -20,6 +20,13 @@ const lifeLinks = [
   { href: '/life/migration', label: '移住支援',       sub: '補助金・体験住宅・相談窓口', accent: '#3d5a6e' },
 ]
 
+const connectLinks = [
+  { href: '/connect/furusato',          label: 'ふるさと納税',         sub: 'せたなを応援する寄付',     accent: '#4a7c6f' },
+  { href: '/connect/corporate-furusato', label: '企業版ふるさと納税',   sub: '法人による地域貢献',       accent: '#3d5c6e' },
+  { href: '/connect/famimatch',          label: 'ファミマッチ',         sub: '町内外のマッチング',       accent: '#8a6b5b' },
+  { href: '/connect/relation',           label: '関係人口として関わる', sub: '二拠点・ワーケーション',   accent: '#6b8a72' },
+]
+
 function DropdownMenu({
   links,
   accentColor,
@@ -50,11 +57,12 @@ function DropdownMenu({
 
 export default function NavMenu() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [mobileExpanded, setMobileExpanded] = useState<'travel' | 'life' | null>(null)
+  const [mobileExpanded, setMobileExpanded] = useState<'travel' | 'life' | 'connect' | null>(null)
   const pathname = usePathname()
 
-  const travelActive = pathname.startsWith('/travel')
-  const lifeActive   = pathname.startsWith('/life')
+  const travelActive  = pathname.startsWith('/travel')
+  const lifeActive    = pathname.startsWith('/life')
+  const connectActive = pathname.startsWith('/connect')
 
   return (
     <>
@@ -90,6 +98,22 @@ export default function NavMenu() {
             <span className="text-[10px] opacity-50">▾</span>
           </Link>
           <DropdownMenu links={lifeLinks} accentColor="#5b7e95" />
+        </div>
+
+        {/* 関わる */}
+        <div className="relative group">
+          <Link
+            href="/connect"
+            className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors min-h-[48px] flex items-center gap-1 nav-label ${
+              connectActive
+                ? 'border-[#4a7c6f] text-[#4a7c6f]'
+                : 'border-transparent text-[#5c5c5c] hover:text-[#1a1a1a]'
+            }`}
+          >
+            関わる
+            <span className="text-[10px] opacity-50">▾</span>
+          </Link>
+          <DropdownMenu links={connectLinks} accentColor="#4a7c6f" />
         </div>
       </nav>
 
@@ -155,6 +179,35 @@ export default function NavMenu() {
               {mobileExpanded === 'life' && (
                 <div className="py-2 pl-4">
                   {lifeLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-between py-3 border-b border-[#faf8f5]"
+                    >
+                      <div>
+                        <p className="text-[14px] font-medium text-[#1a1a1a]">{link.label}</p>
+                        <p className="text-[11px] text-[#8a8a8a]">{link.sub}</p>
+                      </div>
+                      <span className="text-[#e0e0e0] text-[12px]">→</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 関わる */}
+            <div>
+              <button
+                className="w-full flex items-center justify-between py-4 text-[15px] font-medium text-[#1a1a1a] border-b border-[#efefef]"
+                onClick={() => setMobileExpanded(mobileExpanded === 'connect' ? null : 'connect')}
+              >
+                <span>関わる</span>
+                <span className={`text-[#8a8a8a] transition-transform ${mobileExpanded === 'connect' ? 'rotate-180' : ''}`}>▾</span>
+              </button>
+              {mobileExpanded === 'connect' && (
+                <div className="py-2 pl-4">
+                  {connectLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}

@@ -15,17 +15,24 @@ const lifeLinks = [
   { href: '/life/migration', label: '移住支援' },
 ]
 
+const connectLinks = [
+  { href: '/connect/furusato',           label: 'ふるさと納税' },
+  { href: '/connect/corporate-furusato', label: '企業版ふるさと納税' },
+  { href: '/connect/famimatch',          label: 'ファミマッチ' },
+  { href: '/connect/relation',           label: '関係人口' },
+]
+
 export default function Footer() {
   return (
     <footer className="bg-[#1a1a1a] mt-0">
       <div className="max-w-[1120px] mx-auto px-5 lg:px-8 py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 lg:gap-12 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 lg:gap-10 mb-10">
           {/* ブランド */}
           <div>
             <p className="font-bold text-white text-[17px] tracking-[0.1em] mb-3">
               SETANA
             </p>
-            <p className="text-[12px] text-white/40 leading-[1.8] max-w-xs">
+            <p className="text-[12px] text-white/40 leading-[1.8]">
               北海道久遠郡せたな町の暮らし・食・自然を伝える地域総合メディア。
               海と山に抱かれた町の、暮らしのすべて。
             </p>
@@ -52,6 +59,22 @@ export default function Footer() {
             <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">LIFE</p>
             <nav className="space-y-2">
               {lifeLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-[13px] text-white/50 hover:text-white/90 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* 関わる */}
+          <div>
+            <p className="text-[10px] text-white/30 tracking-[0.2em] nav-label mb-4">CONNECT</p>
+            <nav className="space-y-2">
+              {connectLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}

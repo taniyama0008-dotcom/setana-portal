@@ -61,6 +61,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/life/living`,     lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/life/migration`,  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
 
+    // 関わる
+    { url: `${baseUrl}/connect`,                                lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/connect/furusato`,                       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${baseUrl}/connect/furusato/gifts`,                 lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/furusato/stories`,               lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/furusato/usage`,                 lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/connect/furusato/faq`,                   lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/connect/corporate-furusato`,             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${baseUrl}/connect/corporate-furusato/about`,       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/corporate-furusato/projects`,    lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/corporate-furusato/simulation`,  lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/connect/corporate-furusato/cases`,       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/connect/corporate-furusato/contact`,     lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.5 },
+    { url: `${baseUrl}/connect/famimatch`,                      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/relation`,                       lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${baseUrl}/connect/relation/workation`,             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/relation/remote-work`,           lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${baseUrl}/connect/relation/volunteer`,             lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+
     // 記事
     ...articleEntries,
 
