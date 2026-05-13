@@ -1,5 +1,6 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getSessionRole, getSessionUserId } from '@/lib/session'
@@ -254,12 +255,16 @@ export async function createSpot(_prev: unknown, formData: FormData) {
     return { error: '必須項目を入力してください。' }
   }
 
-  const { error } = await supabaseAdmin.from('spots').insert(payload)
+  const { data: created, error } = await supabaseAdmin
+    .from('spots')
+    .insert(payload)
+    .select('id')
+    .single()
   if (error) {
     if (error.code === '23505') return { error: 'そのスラッグは既に使用されています。' }
-    return { error: '作成に失敗しました。' }
+    return { error: `作成に失敗しました: ${error.message}` }
   }
 
   revalidatePath('/admin/spots')
-  return { success: true }
+  redirect(`/admin/spots/${created.id}/edit`)
 }

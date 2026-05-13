@@ -7,9 +7,9 @@ import SpotActions from './SpotActions'
 
 const sections = [
   { value: '', label: 'すべて' },
-  { value: 'kurashi', label: '暮らし' },
-  { value: 'shoku',   label: '食' },
-  { value: 'shizen',  label: '自然' },
+  { value: 'travel',  label: '旅する' },
+  { value: 'life',    label: '暮らす' },
+  { value: 'connect', label: '関わる' },
 ]
 
 const areas = [
@@ -35,7 +35,8 @@ export default async function AdminSpotsPage({
   if (area) query = query.eq('area', area)
   if (q) query = query.ilike('name', `%${q}%`)
 
-  const { data: spots } = await query
+  const { data: spots, error: spotsError } = await query
+  if (spotsError) console.error('[admin/spots] データ取得エラー:', spotsError)
 
   return (
     <div className="p-8 max-w-[1100px]">
