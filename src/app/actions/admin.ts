@@ -77,7 +77,7 @@ export async function deleteArticle(articleId: string) {
 }
 
 // ── スポット画像 ──────────────────────────────────────────
-export async function addSpotImage(spotId: string, imageUrl: string, altText: string) {
+export async function addSpotImage(spotId: string, imageUrl: string, altText: string, imageType = 'inline') {
   await assertAdmin()
   const { data: last } = await supabaseAdmin
     .from('spot_images')
@@ -91,6 +91,7 @@ export async function addSpotImage(spotId: string, imageUrl: string, altText: st
     spot_id: spotId,
     image_url: imageUrl,
     alt_text: altText || null,
+    image_type: imageType,
     sort_order: nextOrder,
   })
   revalidatePath(`/admin/spots/${spotId}/images`)

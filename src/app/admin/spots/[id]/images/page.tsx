@@ -39,6 +39,7 @@ export default async function SpotImagesPage({
 
       <SpotImageManager
         spotId={id}
+        spotSlug={spot.slug}
         initialImages={(images ?? []) as SpotImage[]}
       />
     </div>

@@ -88,6 +88,7 @@ export interface SpotImage {
   image_url: string
   alt_text: string | null
   sort_order: number
+  image_type: 'cover' | 'inline' | 'gallery'
   created_at: string
 }
 
