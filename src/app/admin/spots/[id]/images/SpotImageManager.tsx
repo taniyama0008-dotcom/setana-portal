@@ -3,10 +3,10 @@
 import { useRef, useState, useTransition } from 'react'
 import Image from 'next/image'
 import type { SpotImage } from '@/lib/types'
-import { addSpotImage, deleteSpotImage, moveSpotImageUp, moveSpotImageDown } from '@/app/actions/admin'
+import { addSpotImage, deleteSpotImage, moveSpotImageUp, moveSpotImageDown, updateSpotImageType } from '@/app/actions/admin'
 import { syncSpotCoverImage } from '@/app/actions/spotCover'
 
-const MAX = 5
+const MAX = 20
 
 type ImageType = 'cover' | 'inline' | 'gallery'
 
@@ -35,6 +35,7 @@ export default function SpotImageManager({
   const [url, setUrl]                 = useState('')
   const [alt, setAlt]                 = useState('')
   const [imageType, setImageType]     = useState<ImageType>('inline')
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null)
   const [isPending, start]            = useTransition()
   const [uploadProgress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -234,10 +235,37 @@ export default function SpotImageManager({
                 <p className="text-[12px] text-[#1a1a1a] truncate">{img.image_url}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {img.alt_text && <p className="text-[11px] text-[#8a8a8a]">{img.alt_text}</p>}
-                  {img.image_type && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${imageTypeBadge[img.image_type] ?? imageTypeBadge.inline}`}>
-                      {img.image_type}
-                    </span>
+                  {/* image_type バッジ — クリックでインライン編集 */}
+                  {editingTypeId === img.id ? (
+                    <select
+                      value={img.image_type ?? 'inline'}
+                      autoFocus
+                      onBlur={() => setEditingTypeId(null)}
+                      onChange={(e) => {
+                        const newType = e.target.value as ImageType
+                        setImages(prev => prev.map(im => {
+                          if (im.id === img.id) return { ...im, image_type: newType }
+                          if (newType === 'cover' && im.image_type === 'cover') return { ...im, image_type: 'inline' }
+                          return im
+                        }))
+                        setEditingTypeId(null)
+                        start(async () => { await updateSpotImageType(img.id, spotId, newType) })
+                      }}
+                      className="text-[11px] border border-[#5b7e95] rounded px-1 py-0.5 bg-white focus:outline-none"
+                    >
+                      {imageTypeOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label.split('（')[0]}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditingTypeId(img.id)}
+                      title="クリックで変更"
+                      className={`text-[10px] px-1.5 py-0.5 rounded font-medium cursor-pointer hover:opacity-70 transition-opacity ${imageTypeBadge[img.image_type ?? 'inline'] ?? imageTypeBadge.inline}`}
+                    >
+                      {img.image_type ?? 'inline'}
+                    </button>
                   )}
                 </div>
               </div>

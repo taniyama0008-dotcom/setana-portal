@@ -9,21 +9,32 @@ async function assertAdmin() {
   if (role !== 'admin') throw new Error('Forbidden')
 }
 
-/** spot_images の先頭画像を spots.cover_image に同期する */
+/** cover type の画像を優先し、なければ sort_order 先頭を spots.cover_image に同期する */
 export async function syncSpotCoverImage(spotId: string): Promise<void> {
   await assertAdmin()
-  const { data: firstImage } = await supabaseAdmin
+
+  const { data: coverTyped } = await supabaseAdmin
     .from('spot_images')
     .select('image_url')
     .eq('spot_id', spotId)
+    .eq('image_type', 'cover')
     .order('sort_order', { ascending: true })
     .limit(1)
     .maybeSingle()
 
-  await supabaseAdmin
-    .from('spots')
-    .update({ cover_image: firstImage?.image_url ?? null })
-    .eq('id', spotId)
+  let coverUrl = coverTyped?.image_url ?? null
+  if (!coverUrl) {
+    const { data: first } = await supabaseAdmin
+      .from('spot_images')
+      .select('image_url')
+      .eq('spot_id', spotId)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    coverUrl = first?.image_url ?? null
+  }
+
+  await supabaseAdmin.from('spots').update({ cover_image: coverUrl }).eq('id', spotId)
 
   const { data: spotInfo } = await supabaseAdmin
     .from('spots')

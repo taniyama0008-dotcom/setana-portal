@@ -79,13 +79,23 @@ export async function deleteArticle(articleId: string) {
 // ── スポット画像 ──────────────────────────────────────────
 export async function addSpotImage(spotId: string, imageUrl: string, altText: string, imageType = 'inline') {
   await assertAdmin()
+
+  // cover を追加するとき既存の cover を inline に降格
+  if (imageType === 'cover') {
+    await supabaseAdmin
+      .from('spot_images')
+      .update({ image_type: 'inline' })
+      .eq('spot_id', spotId)
+      .eq('image_type', 'cover')
+  }
+
   const { data: last } = await supabaseAdmin
     .from('spot_images')
     .select('sort_order')
     .eq('spot_id', spotId)
     .order('sort_order', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
   const nextOrder = last ? (last.sort_order ?? 0) + 1 : 0
   await supabaseAdmin.from('spot_images').insert({
     spot_id: spotId,
@@ -95,6 +105,59 @@ export async function addSpotImage(spotId: string, imageUrl: string, altText: st
     sort_order: nextOrder,
   })
   revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
+export async function updateSpotImageType(imageId: string, spotId: string, imageType: string) {
+  await assertAdmin()
+
+  // cover に変更するとき他の cover を inline に降格
+  if (imageType === 'cover') {
+    await supabaseAdmin
+      .from('spot_images')
+      .update({ image_type: 'inline' })
+      .eq('spot_id', spotId)
+      .eq('image_type', 'cover')
+      .neq('id', imageId)
+  }
+
+  await supabaseAdmin
+    .from('spot_images')
+    .update({ image_type: imageType })
+    .eq('id', imageId)
+
+  // cover_image を再同期（cover type 優先、なければ sort_order 先頭）
+  const { data: coverTyped } = await supabaseAdmin
+    .from('spot_images')
+    .select('image_url')
+    .eq('spot_id', spotId)
+    .eq('image_type', 'cover')
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  let coverUrl = coverTyped?.image_url ?? null
+  if (!coverUrl) {
+    const { data: first } = await supabaseAdmin
+      .from('spot_images')
+      .select('image_url')
+      .eq('spot_id', spotId)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    coverUrl = first?.image_url ?? null
+  }
+  await supabaseAdmin.from('spots').update({ cover_image: coverUrl }).eq('id', spotId)
+
+  const { data: spotInfo } = await supabaseAdmin.from('spots').select('slug').eq('id', spotId).single()
+  if (spotInfo?.slug) revalidatePath(`/spot/${spotInfo.slug}`)
+  revalidatePath('/travel/stay')
+  revalidatePath('/travel/gourmet')
+  revalidatePath('/travel/onsen')
+  revalidatePath('/travel/nature')
+  revalidatePath('/travel/fishing')
+  revalidatePath(`/admin/spots/${spotId}/images`)
+
   return { success: true }
 }
 

@@ -68,6 +68,15 @@ export async function POST(req: NextRequest) {
   const { data: urlData } = supabaseAdmin.storage.from('spots').getPublicUrl(storagePath)
   const publicUrl = urlData.publicUrl
 
+  // ─── cover アップロード時に既存 cover を inline に降格 ──
+  if (imageType === 'cover') {
+    await supabaseAdmin
+      .from('spot_images')
+      .update({ image_type: 'inline' })
+      .eq('spot_id', spotId)
+      .eq('image_type', 'cover')
+  }
+
   // ─── sort_order を決定 ──────────────────────────────────
   const { data: last } = await supabaseAdmin
     .from('spot_images')
@@ -96,18 +105,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `DB登録に失敗しました: ${dbError.message}` }, { status: 500 })
   }
 
-  // ─── cover_image を同期 ──────────────────────────────────
-  const { data: firstImage } = await supabaseAdmin
+  // ─── cover_image を同期（cover type 優先、なければ sort_order 先頭）──
+  const { data: coverTyped } = await supabaseAdmin
     .from('spot_images')
     .select('image_url')
     .eq('spot_id', spotId)
+    .eq('image_type', 'cover')
     .order('sort_order', { ascending: true })
     .limit(1)
     .maybeSingle()
 
+  let coverUrl = coverTyped?.image_url ?? null
+  if (!coverUrl) {
+    const { data: first } = await supabaseAdmin
+      .from('spot_images')
+      .select('image_url')
+      .eq('spot_id', spotId)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    coverUrl = first?.image_url ?? null
+  }
+
   await supabaseAdmin
     .from('spots')
-    .update({ cover_image: firstImage?.image_url ?? null })
+    .update({ cover_image: coverUrl })
     .eq('id', spotId)
 
   revalidatePath(`/admin/spots/${spotId}/images`)
