@@ -27,14 +27,15 @@ export default function SpotGallery({ images, coverImage, spotName, gradient }: 
   return (
     <>
       {/* メイン画像 */}
-      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[600px] bg-[#1a1a1a] overflow-hidden">
+      <div className="relative w-full bg-[#1a1a1a] overflow-hidden">
         {active ? (
           <>
             <Image
               src={active.url}
               alt={active.alt}
-              fill
-              className="object-cover object-top cursor-zoom-in"
+              width={1920}
+              height={1080}
+              className="w-full h-auto cursor-zoom-in"
               priority
               unoptimized
               onClick={() => setLightbox(activeIdx)}
@@ -42,7 +43,7 @@ export default function SpotGallery({ images, coverImage, spotName, gradient }: 
             <div className="absolute inset-0 bg-black/15 pointer-events-none" />
           </>
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
+          <div className={`w-full aspect-[16/9] bg-gradient-to-br ${gradient}`} />
         )}
 
         {/* 枚数バッジ */}
