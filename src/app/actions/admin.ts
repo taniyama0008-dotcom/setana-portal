@@ -239,6 +239,7 @@ export async function createSpot(_prev: unknown, formData: FormData) {
     name:             formData.get('name') as string,
     slug:             formData.get('slug') as string,
     section:          formData.get('section') as string,
+    category:         '',
     primary_category: primaryCategory,
     sub_categories:   subCategories,
     spot_order:       {},
