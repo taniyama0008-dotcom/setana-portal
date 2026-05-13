@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { supabase } from '@/lib/supabase'
 import { getSessionUserId } from '@/lib/session'
 import type { Spot, SpotImage } from '@/lib/types'
@@ -211,9 +213,47 @@ export default async function SpotPage({
         {/* 説明文 */}
         {spot.description && (
           <section className="py-10 border-b border-[#e0e0e0]">
-            <p className="text-[15px] text-[#1a1a1a] leading-[1.9] tracking-[0.06em] max-w-[680px]">
-              {spot.description}
-            </p>
+            <div className="max-w-[680px]">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h2: ({ children }) => (
+                    <h2 className="text-[20px] font-semibold text-[#1a1a1a] mt-10 mb-4 tracking-[0.02em]">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-[17px] font-semibold text-[#1a1a1a] mt-8 mb-3 tracking-[0.02em]">{children}</h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="text-[15px] text-[#1a1a1a] leading-[1.9] tracking-[0.06em] mb-6">{children}</p>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc pl-6 mb-6 space-y-2">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal pl-6 mb-6 space-y-2">{children}</ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="text-[15px] text-[#1a1a1a] leading-[1.8] tracking-[0.05em]">{children}</li>
+                  ),
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      className="text-[#5b7e95] underline underline-offset-2 hover:text-[#3d5a6e] transition-colors"
+                      target={href?.startsWith('http') ? '_blank' : undefined}
+                      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    >
+                      {children}
+                    </a>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-[#1a1a1a]">{children}</strong>
+                  ),
+                  hr: () => <hr className="border-[#e0e0e0] my-8" />,
+                }}
+              >
+                {spot.description}
+              </ReactMarkdown>
+            </div>
           </section>
         )}
 

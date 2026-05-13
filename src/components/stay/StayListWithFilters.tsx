@@ -48,6 +48,7 @@ function StayCard({ spot }: { spot: Spot }) {
               alt={spot.name}
               fill
               className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              unoptimized
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#5b7e95] to-[#3d5a6e]" />
