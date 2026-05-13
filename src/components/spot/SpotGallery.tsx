@@ -27,14 +27,14 @@ export default function SpotGallery({ images, coverImage, spotName, gradient }: 
   return (
     <>
       {/* メイン画像 */}
-      <div className="relative w-full aspect-[16/9] bg-[#1a1a1a] overflow-hidden">
+      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[600px] bg-[#1a1a1a] overflow-hidden">
         {active ? (
           <>
             <Image
               src={active.url}
               alt={active.alt}
               fill
-              className="object-cover cursor-zoom-in"
+              className="object-cover object-center cursor-zoom-in"
               priority
               unoptimized
               onClick={() => setLightbox(activeIdx)}
