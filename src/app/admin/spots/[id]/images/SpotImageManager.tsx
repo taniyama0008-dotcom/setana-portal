@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import Image from 'next/image'
 import type { SpotImage } from '@/lib/types'
-import { addSpotImage, deleteSpotImage, moveSpotImageUp, moveSpotImageDown, updateSpotImageType } from '@/app/actions/admin'
+import { deleteSpotImageWithPromotion, moveSpotImageUp, moveSpotImageDown, updateSpotImageType } from '@/app/actions/admin'
 import { syncSpotCoverImage } from '@/app/actions/spotCover'
 
 const MAX = 20
@@ -32,24 +32,12 @@ export default function SpotImageManager({
   initialImages: SpotImage[]
 }) {
   const [images, setImages]           = useState(initialImages)
-  const [url, setUrl]                 = useState('')
-  const [alt, setAlt]                 = useState('')
   const [imageType, setImageType]     = useState<ImageType>('inline')
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null)
   const [isPending, start]            = useTransition()
   const [uploadProgress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileRef                       = useRef<HTMLInputElement>(null)
-
-  const handleAdd = () => {
-    if (!url.trim() || images.length >= MAX) return
-    start(async () => {
-      await addSpotImage(spotId, url.trim(), alt.trim(), imageType)
-      await syncSpotCoverImage(spotId)
-      setUrl('')
-      setAlt('')
-    })
-  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const allFiles = Array.from(e.target.files ?? [])
@@ -178,44 +166,6 @@ export default function SpotImageManager({
         )}
       </div>
 
-      {/* ── URL入力 ── */}
-      {!atLimit && (
-        <div className="bg-[#faf8f5] rounded-[8px] p-5 border border-[#e0e0e0]">
-          <p className="text-[13px] font-medium text-[#5c5c5c] mb-3">URLで追加</p>
-          <div className="flex gap-2 flex-wrap">
-            <input
-              type="url"
-              placeholder="https://... 画像URL"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-1 min-w-[220px] border border-[#e0e0e0] rounded-[6px] px-3 py-2 text-[13px] focus:outline-none focus:border-[#5b7e95] bg-white"
-            />
-            <input
-              type="text"
-              placeholder="alt テキスト（省略可）"
-              value={alt}
-              onChange={(e) => setAlt(e.target.value)}
-              className="w-[160px] border border-[#e0e0e0] rounded-[6px] px-3 py-2 text-[13px] focus:outline-none focus:border-[#5b7e95] bg-white"
-            />
-            <button
-              type="button"
-              disabled={isPending || !url.trim()}
-              onClick={handleAdd}
-              className="px-4 py-2 bg-[#5b7e95] hover:bg-[#3d5a6e] disabled:opacity-50 text-white text-[13px] font-medium rounded-[6px] transition-colors"
-            >
-              追加
-            </button>
-          </div>
-          {url && (
-            <div className="mt-3">
-              <p className="text-[11px] text-[#8a8a8a] mb-1">プレビュー</p>
-              <Image src={url} alt="プレビュー" width={160} height={90} className="rounded-[4px] object-cover border border-[#e0e0e0]" unoptimized onError={() => {}} />
-            </div>
-          )}
-          <p className="mt-2 text-[11px] text-[#8a8a8a]">※ URLで追加した画像はリサイズ・変換されません。</p>
-        </div>
-      )}
-
       {/* ── 画像リスト ── */}
       {images.length === 0 ? (
         <p className="text-[13px] text-[#8a8a8a] py-4">画像がありません。上から追加してください。</p>
@@ -295,10 +245,16 @@ export default function SpotImageManager({
                   disabled={isPending}
                   onClick={() => {
                     if (!confirm('この画像を削除しますか？')) return
-                    setImages(prev => prev.filter(im => im.id !== img.id))
+                    const wasCover = img.image_type === 'cover'
+                    setImages(prev => {
+                      const next = prev.filter(im => im.id !== img.id)
+                      if (wasCover && next.length > 0) {
+                        return next.map((im, idx) => idx === 0 ? { ...im, image_type: 'cover' } : im)
+                      }
+                      return next
+                    })
                     start(async () => {
-                      await deleteSpotImage(img.id, spotId)
-                      await syncSpotCoverImage(spotId)
+                      await deleteSpotImageWithPromotion(img.id, spotId, wasCover)
                     })
                   }}
                   className="w-7 h-7 flex items-center justify-center text-[#8a8a8a] hover:text-[#d94f4f] disabled:opacity-50 transition-colors"

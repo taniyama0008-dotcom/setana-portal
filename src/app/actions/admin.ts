@@ -168,6 +168,54 @@ export async function deleteSpotImage(imageId: string, spotId: string) {
   return { success: true }
 }
 
+export async function deleteSpotImageWithPromotion(imageId: string, spotId: string, wasCover: boolean) {
+  await assertAdmin()
+  await supabaseAdmin.from('spot_images').delete().eq('id', imageId)
+
+  const { data: remaining } = await supabaseAdmin
+    .from('spot_images')
+    .select('id, image_url')
+    .eq('spot_id', spotId)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  let coverUrl: string | null = null
+
+  if (wasCover) {
+    if (remaining) {
+      await supabaseAdmin
+        .from('spot_images')
+        .update({ image_type: 'cover' })
+        .eq('id', remaining.id)
+      coverUrl = remaining.image_url
+    }
+    await supabaseAdmin.from('spots').update({ cover_image: coverUrl }).eq('id', spotId)
+  } else {
+    // Not a cover deletion — re-sync normally
+    const { data: coverTyped } = await supabaseAdmin
+      .from('spot_images')
+      .select('image_url')
+      .eq('spot_id', spotId)
+      .eq('image_type', 'cover')
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    coverUrl = coverTyped?.image_url ?? remaining?.image_url ?? null
+    await supabaseAdmin.from('spots').update({ cover_image: coverUrl }).eq('id', spotId)
+  }
+
+  const { data: spotInfo } = await supabaseAdmin.from('spots').select('slug').eq('id', spotId).single()
+  if (spotInfo?.slug) revalidatePath(`/spot/${spotInfo.slug}`)
+  revalidatePath('/travel/stay')
+  revalidatePath('/travel/gourmet')
+  revalidatePath('/travel/onsen')
+  revalidatePath('/travel/nature')
+  revalidatePath('/travel/fishing')
+  revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
 export async function moveSpotImageUp(imageId: string, spotId: string) {
   await assertAdmin()
   const { data: all } = await supabaseAdmin
