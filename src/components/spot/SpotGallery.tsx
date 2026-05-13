@@ -34,7 +34,7 @@ export default function SpotGallery({ images, coverImage, spotName, gradient }: 
               src={active.url}
               alt={active.alt}
               fill
-              className="object-cover object-center cursor-zoom-in"
+              className="object-cover object-top cursor-zoom-in"
               priority
               unoptimized
               onClick={() => setLightbox(activeIdx)}
