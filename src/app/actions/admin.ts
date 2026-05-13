@@ -214,12 +214,13 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
     return { error: `更新に失敗しました: ${error.message}` }
   }
 
-  // 事業者割り当て
+  // 事業者割り当て（spot に対して担当者は1人。既存を削除して再登録）
   const businessUserId = str('business_user_id')
+  await supabaseAdmin.from('business_spots').delete().eq('spot_id', id)
   if (businessUserId) {
     await supabaseAdmin
       .from('business_spots')
-      .upsert({ user_id: businessUserId, spot_id: id }, { onConflict: 'user_id,spot_id' })
+      .insert({ user_id: businessUserId, spot_id: id })
   }
 
   revalidatePath('/admin/spots')
