@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getSessionUserId } from '@/lib/session'
 import MyPageProfile from './MyPageProfile'
+import MyReviewActions from './MyReviewActions'
 
 const sectionConfig = {
   kurashi: { label: '暮らし', bgClass: 'bg-[#5b7e95]', gradient: 'from-[#5b7e95] to-[#3d5a6e]' },
@@ -158,7 +159,10 @@ export default async function MyPage() {
                         <p className="text-[14px] text-[#1a1a1a] leading-[1.8]">{r.comment}</p>
                       )}
                     </div>
-                    <span className="text-[12px] text-[#8a8a8a] shrink-0 tabular-nums">{formatDate(r.created_at)}</span>
+                    <div className="shrink-0 flex flex-col items-end gap-2">
+                      <span className="text-[12px] text-[#8a8a8a] tabular-nums">{formatDate(r.created_at)}</span>
+                      <MyReviewActions reviewId={r.id} />
+                    </div>
                   </div>
                 </li>
               ))}
