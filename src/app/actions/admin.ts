@@ -11,9 +11,16 @@ async function assertAdmin() {
 }
 
 // ── 口コミ ──────────────────────────────────────────────
-export async function updateReviewStatus(reviewId: string, status: string) {
+export async function updateReviewStatus(reviewId: string, status: 'public' | 'hidden' | 'pending') {
   await assertAdmin()
   await supabaseAdmin.from('reviews').update({ status }).eq('id', reviewId)
+  revalidatePath('/admin/reviews')
+  return { success: true }
+}
+
+export async function deleteReview(reviewId: string) {
+  await assertAdmin()
+  await supabaseAdmin.from('reviews').delete().eq('id', reviewId)
   revalidatePath('/admin/reviews')
   return { success: true }
 }

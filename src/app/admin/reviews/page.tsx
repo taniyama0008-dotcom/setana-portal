@@ -5,10 +5,10 @@ import StatusBadge from '@/components/admin/StatusBadge'
 import ReviewActions from './ReviewActions'
 
 const statusFilters = [
-  { value: '',          label: 'すべて' },
-  { value: 'pending',   label: '保留中' },
-  { value: 'published', label: '公開中' },
-  { value: 'hidden',    label: '非表示' },
+  { value: '',        label: 'すべて' },
+  { value: 'pending', label: '保留中' },
+  { value: 'public',  label: '公開中' },
+  { value: 'hidden',  label: '非表示' },
 ]
 
 function StarDisplay({ rating }: { rating: number }) {
