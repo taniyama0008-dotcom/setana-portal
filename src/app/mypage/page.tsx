@@ -38,7 +38,7 @@ export default async function MyPage() {
       .single(),
     supabaseAdmin
       .from('reviews')
-      .select('id, rating, text, visit_date, status, created_at, spots(name, slug, section)')
+      .select('id, rating, comment, visit_year, visit_month, status, created_at, spots(name, slug, section)')
       .eq('user_id', uid)
       .order('created_at', { ascending: false }),
     supabaseAdmin
@@ -148,14 +148,14 @@ export default async function MyPage() {
                       </Link>
                       <div className="flex items-center gap-2 mt-1 mb-2">
                         <StarDisplay rating={r.rating} />
-                        {r.visit_date && (
+                        {r.visit_year && (
                           <span className="text-[12px] text-[#8a8a8a]">
-                            {r.visit_date.replace('-', '年').replace(/(\d+)$/, '$1月')}に訪問
+                            {r.visit_year}年{r.visit_month ? `${r.visit_month}月` : ''}に訪問
                           </span>
                         )}
                       </div>
-                      {r.text && (
-                        <p className="text-[14px] text-[#1a1a1a] leading-[1.8]">{r.text}</p>
+                      {r.comment && (
+                        <p className="text-[14px] text-[#1a1a1a] leading-[1.8]">{r.comment}</p>
                       )}
                     </div>
                     <span className="text-[12px] text-[#8a8a8a] shrink-0 tabular-nums">{formatDate(r.created_at)}</span>

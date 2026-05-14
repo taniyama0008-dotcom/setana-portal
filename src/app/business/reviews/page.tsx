@@ -36,7 +36,7 @@ export default async function BusinessReviewsPage() {
 
   const { data: reviews } = await supabaseAdmin
     .from('reviews')
-    .select('id, spot_id, nickname, rating, text, visit_date, status, business_reply, business_reply_at, created_at, spots(name, id)')
+    .select('id, spot_id, nickname, rating, comment, visit_year, visit_month, status, business_reply, business_reply_at, created_at, spots(name, id)')
     .in('spot_id', spotIds.length ? spotIds : ['00000000-0000-0000-0000-000000000000'])
     .in('status', ['published', 'pending'])
     .order('created_at', { ascending: false })
@@ -73,8 +73,8 @@ export default async function BusinessReviewsPage() {
                   </div>
                   <span className="text-[12px] text-[#8a8a8a] tabular-nums shrink-0">{formatDate(r.created_at)}</span>
                 </div>
-                {r.text && (
-                  <p className="text-[14px] text-[#1a1a1a] leading-[1.8] ml-10">{r.text}</p>
+                {r.comment && (
+                  <p className="text-[14px] text-[#1a1a1a] leading-[1.8] ml-10">{r.comment}</p>
                 )}
               </div>
 

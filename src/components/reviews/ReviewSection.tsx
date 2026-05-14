@@ -25,10 +25,9 @@ function StarDisplay({ rating, size = 'md' }: { rating: number; size?: 'sm' | 'm
   )
 }
 
-function formatVisitDate(visitDate: string | null): string | null {
-  if (!visitDate) return null
-  const [year, month] = visitDate.split('-')
-  return `${year}年${parseInt(month, 10)}月`
+function formatVisitYearMonth(year: number | null, month: number | null): string | null {
+  if (!year) return null
+  return month ? `${year}年${month}月` : `${year}年`
 }
 
 function formatDate(dateString: string): string {
@@ -143,11 +142,11 @@ export default async function ReviewSection({
                       <p className="text-[13px] font-medium text-[#1a1a1a]">{review.nickname}</p>
                       <div className="flex items-center gap-2">
                         <StarDisplay rating={review.rating} size="sm" />
-                        {review.visit_date && (
+                        {formatVisitYearMonth(review.visit_year, review.visit_month) && (
                           <>
                             <span className="text-[#e0e0e0] text-[11px]">·</span>
                             <span className="text-[12px] text-[#8a8a8a]">
-                              {formatVisitDate(review.visit_date)}に訪問
+                              {formatVisitYearMonth(review.visit_year, review.visit_month)}に訪問
                             </span>
                           </>
                         )}
@@ -157,9 +156,9 @@ export default async function ReviewSection({
                       {formatDate(review.created_at)}
                     </span>
                   </div>
-                  {review.text && (
+                  {review.comment && (
                     <p className="text-[14px] text-[#1a1a1a] leading-[1.8] tracking-[0.05em] mt-3 ml-11">
-                      {review.text}
+                      {review.comment}
                     </p>
                   )}
                   {reviewImages.length > 0 && (

@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
     supabaseAdmin.from('reviews').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth.toISOString()),
     supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('role', 'business'),
-    supabaseAdmin.from('reviews').select('id, nickname, rating, text, status, created_at, spots(name, section)').order('created_at', { ascending: false }).limit(5),
+    supabaseAdmin.from('reviews').select('id, nickname, rating, comment, status, created_at, spots(name, section)').order('created_at', { ascending: false }).limit(5),
     supabaseAdmin.from('users').select('id, nickname, line_display_name, role, created_at').order('created_at', { ascending: false }).limit(5),
   ])
 

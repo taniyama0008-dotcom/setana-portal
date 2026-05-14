@@ -219,7 +219,7 @@ export default function ReviewForm({ spotId, slug, dbNickname }: ReviewFormProps
         </label>
         <textarea
           id="review-text"
-          name="text"
+          name="comment"
           rows={4}
           maxLength={1000}
           placeholder="このスポットの感想を書いてください"

@@ -68,10 +68,10 @@ export interface Review {
   user_id: string | null
   nickname: string
   rating: number
-  text: string | null
-  visit_date: string | null
+  comment: string | null
+  visit_year: number | null
+  visit_month: number | null
   status: ReviewStatus
-  helpful_count: number
   created_at: string
 }
 

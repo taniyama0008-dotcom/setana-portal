@@ -21,8 +21,8 @@ export async function submitReview(
   const slug      = formData.get('slug') as string
   const nickname  = (formData.get('nickname') as string ?? '').trim()
   const ratingRaw = formData.get('rating') as string
-  const text      = (formData.get('text') as string ?? '').trim()
-  const visitYear = formData.get('visit_year') as string
+  const comment    = (formData.get('comment') as string ?? '').trim()
+  const visitYear  = formData.get('visit_year') as string
   const visitMonth = formData.get('visit_month') as string
   const imageUrlsRaw = formData.get('image_urls') as string | null
 
@@ -37,7 +37,7 @@ export async function submitReview(
   }
 
   // 4. 本文バリデーション
-  if (text.length > 1000) return { error: '口コミは1000文字以内で入力してください。' }
+  if (comment.length > 1000) return { error: '口コミは1000文字以内で入力してください。' }
 
   // 5. スポット存在確認 + status = 'public' チェック
   const { data: spot } = await supabaseAdmin
@@ -48,11 +48,6 @@ export async function submitReview(
     .maybeSingle()
   if (!spot) return { error: '投稿先のスポットが見つかりません。' }
 
-  const visitDate =
-    visitYear && visitMonth
-      ? `${visitYear}-${visitMonth.padStart(2, '0')}`
-      : null
-
   let imageUrls: string[] = []
   if (imageUrlsRaw) {
     try { imageUrls = JSON.parse(imageUrlsRaw) } catch { /* ignore */ }
@@ -61,13 +56,14 @@ export async function submitReview(
   const { data: review, error } = await supabaseAdmin
     .from('reviews')
     .insert({
-      spot_id:    spotId,
-      user_id:    userId,
+      spot_id:     spotId,
+      user_id:     userId,
       nickname,
       rating,
-      text:       text || null,
-      visit_date: visitDate,
-      status:     'public',
+      comment:     comment || null,
+      visit_year:  visitYear  ? parseInt(visitYear,  10) : null,
+      visit_month: visitMonth ? parseInt(visitMonth, 10) : null,
+      status:      'public',
     })
     .select('id')
     .single()

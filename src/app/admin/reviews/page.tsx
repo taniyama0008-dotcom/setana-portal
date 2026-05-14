@@ -30,7 +30,7 @@ export default async function AdminReviewsPage({
 
   let query = supabaseAdmin
     .from('reviews')
-    .select('id, nickname, rating, text, status, created_at, spots(name, section, slug)')
+    .select('id, nickname, rating, comment, status, created_at, spots(name, section, slug)')
     .order('created_at', { ascending: false })
 
   if (status) query = query.eq('status', status)
@@ -86,7 +86,7 @@ export default async function AdminReviewsPage({
                 <td className="px-4 py-3 whitespace-nowrap"><StarDisplay rating={r.rating} /></td>
                 <td className="px-4 py-3">
                   <p className="text-[13px] text-[#1a1a1a] line-clamp-2 leading-[1.6]">
-                    {r.text ?? <span className="text-[#8a8a8a] italic">本文なし</span>}
+                    {r.comment ?? <span className="text-[#8a8a8a] italic">本文なし</span>}
                   </p>
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
