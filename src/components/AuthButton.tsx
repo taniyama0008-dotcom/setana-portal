@@ -13,7 +13,7 @@ export default function AuthButton({ emailUser }: Props) {
 
   const logout = useCallback(() => {
     start(async () => {
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+      await fetch('/api/auth/logout?explicit=true', { method: 'POST' }).catch(() => {})
       window.location.href = '/'
     })
   }, [])

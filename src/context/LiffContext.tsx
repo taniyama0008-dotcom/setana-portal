@@ -124,7 +124,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
       const liff = await getLiff()
       if (!liff) return
       console.log('[LIFF] logout()')
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+      await fetch('/api/auth/logout?explicit=true', { method: 'POST' }).catch(() => {})
       liff.logout()
       setIsLoggedIn(false)
       setProfile(null)
