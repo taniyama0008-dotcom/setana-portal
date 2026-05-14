@@ -21,7 +21,7 @@ export default async function EditReviewPage({
       .single(),
     supabaseAdmin
       .from('review_images')
-      .select('id, image_url, alt_text')
+      .select('id, review_id, image_url, alt_text')
       .eq('review_id', id),
   ])
 
