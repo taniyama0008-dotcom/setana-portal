@@ -134,6 +134,7 @@ export default function ReviewForm({ spotId, slug, dbNickname }: ReviewFormProps
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const formElement = e.currentTarget  // await 前にキャプチャ（await 後は null になる）
     setIsPending(true)
     setState(null)
 
@@ -155,7 +156,7 @@ export default function ReviewForm({ spotId, slug, dbNickname }: ReviewFormProps
       }
 
       // フォームデータを組み立てる
-      const formData = new FormData(e.currentTarget)
+      const formData = new FormData(formElement)
       formData.set('image_urls', JSON.stringify(imageUrls))
 
       const result = await submitReview(null, formData)
