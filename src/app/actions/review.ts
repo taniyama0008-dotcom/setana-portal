@@ -69,7 +69,7 @@ export async function submitReview(
     .single()
 
   if (error || !review) {
-    console.error('review insert error:', error)
+    console.error('review insert error — code:', error?.code, 'message:', error?.message, 'details:', error?.details)
     return { error: '投稿に失敗しました。もう一度お試しください。' }
   }
 
