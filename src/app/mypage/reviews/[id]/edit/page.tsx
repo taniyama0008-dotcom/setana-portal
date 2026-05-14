@@ -27,7 +27,7 @@ export default async function EditReviewPage({
 
   if (!review || review.user_id !== userId) redirect('/mypage')
 
-  const spot = review.spots as { name: string; slug: string } | null
+  const spot = (Array.isArray(review.spots) ? review.spots[0] : review.spots) as { name: string; slug: string } | null
 
   return (
     <div className="min-h-screen bg-[#faf8f5]">
