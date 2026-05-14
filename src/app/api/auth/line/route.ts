@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { SESSION_UID_COOKIE, SESSION_ROLE_COOKIE, SESSION_PROVIDER_COOKIE, COOKIE_OPTIONS } from '@/lib/session'
 
 interface LineVerifyResponse {
@@ -62,14 +62,14 @@ export async function POST(req: NextRequest) {
   const pictureUrl = verified.picture ?? null
 
   // 既存ユーザー検索
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('users')
     .select('id, role')
     .eq('line_user_id', lineUserId)
     .maybeSingle()
 
   if (existing) {
-    await supabase
+    await supabaseAdmin
       .from('users')
       .update({ line_display_name: displayName, line_picture_url: pictureUrl })
       .eq('id', existing.id)
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 新規ユーザー作成
-  const { data: newUser, error: insertError } = await supabase
+  const { data: newUser, error: insertError } = await supabaseAdmin
     .from('users')
     .insert({
       line_user_id: lineUserId,

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getSessionUserId } from '@/lib/session'
 
 export async function GET() {
   const userId = await getSessionUserId()
   if (!userId) return NextResponse.json({ spotIds: [] })
 
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from('favorites')
     .select('spot_id')
     .eq('user_id', userId)

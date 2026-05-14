@@ -1,5 +1,5 @@
 -- ============================================================
--- 012: Security Advisor 対策 — RLS ポリシー締め直し（最終版）
+-- 012: Security Advisor 対策 — RLS ポリシー締め直し（確定版）
 --
 -- ⚠️  本番 DB 適用前に必ずレビューすること。
 --     適用後は SETANA 全機能の動作確認を行うこと。
@@ -14,24 +14,14 @@
 --
 -- 【Cat-1 の対処方針】
 --   auth.uid() が使えないため、ポリシーによるユーザー紐づけ制限は不可。
---   代わりに:
---   A) service_role しか使わないテーブル → ポリシーを削除
---      (ポリシーなし = anon/authenticated クライアントから操作不可、
---       service_role は RLS をバイパスするので問題なし)
---   B) anon クライアントからの操作が必要なテーブル → 意味のある条件に変更
---      (reviews INSERT: review.ts が supabase anon を使っているため維持)
---
--- 【推奨コード変更（SQL と別に対応してほしい）】
---   src/app/actions/review.ts の import 変更:
---     - import { supabase } from '@/lib/supabase'
---     + import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
---   これにより reviews / review_images の anon INSERT ポリシーが不要になる。
+--   service_role しか使わないテーブル → ポリシーを削除
+--   (ポリシーなし = anon/authenticated クライアントから操作不可)
 --
 -- 対象警告カテゴリ:
 --   Cat-1: RLS Policy Always True   ~20件
+--   Cat-2: Storage Listing 対策（INSERT 許可 + SELECT 制限コメント）
 --   Cat-4: Function Search Path Mutable   2件
---   Cat-2: Storage Listing → 末尾コメント参照（ポリシー名要確認）
---   Cat-3: Password Protection → Dashboard 手動対応
+--   Cat-3: Password Protection → Dashboard 手動対応（このファイル対象外）
 -- ============================================================
 
 
@@ -39,7 +29,8 @@
 -- users
 -- 対処: 既存の USING(true) / WITH CHECK(true) ポリシーをすべて削除
 -- 理由: 全操作が supabaseAdmin (service_role) 経由。
---       anon/authenticated クライアントから users を直接操作する経路なし。
+--   - ログイン: api/auth/line/route.ts → supabaseAdmin に移行済み（別PR）
+--   - プロフィール更新: actions/user.ts → 元から supabaseAdmin
 -- ============================================================
 DROP POLICY IF EXISTS "users_self_read"   ON users;
 DROP POLICY IF EXISTS "users_self_update" ON users;
@@ -50,7 +41,7 @@ DROP POLICY IF EXISTS "users_line_insert" ON users;
 -- ============================================================
 -- favorites
 -- 対処: 既存の USING(true) / WITH CHECK(true) ポリシーをすべて削除
--- 理由: お気に入り操作は server action (supabaseAdmin) 経由のみ。
+-- 理由: actions/favorite.ts → supabaseAdmin に移行済み（別PR）
 -- ============================================================
 DROP POLICY IF EXISTS "favorites_user_read" ON favorites;
 DROP POLICY IF EXISTS "favorites_insert"    ON favorites;
@@ -80,71 +71,42 @@ DROP POLICY IF EXISTS "Allow all on coin_transactions" ON coin_transactions;
 
 -- ============================================================
 -- reviews
--- 対処: INSERT の WITH CHECK(true) に意味のある条件を追加
---
--- ⚠️  現在 review.ts が supabase (anon key) を使っているため
---     anon の INSERT を許可し続けている。
---     review.ts を supabaseAdmin に変更した後は
---     このポリシーを DROP して構わない。
+-- 対処: 旧 USING(true) / WITH CHECK(true) ポリシーを削除
+-- 理由: actions/review.ts を supabaseAdmin に移行済み。
+--       anon クライアントから直接 INSERT する経路なし。
+-- reviews_public_read (USING(status = 'public')) は正しい → 変更なし
 -- ============================================================
 DROP POLICY IF EXISTS "reviews_insert" ON reviews;
-
--- INSERT: anon + authenticated 許可（公開スポットへの投稿のみ）
--- review.ts を supabaseAdmin に変更後は削除可
-CREATE POLICY "reviews_insert" ON reviews
-  FOR INSERT TO anon, authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM spots
-      WHERE spots.id = spot_id
-        AND spots.status = 'public'
-    )
-    AND length(coalesce(nickname, '')) BETWEEN 1 AND 50
-    AND rating BETWEEN 1 AND 5
-  );
-
--- UPDATE: ポリシーなし（service_role のみ — 管理画面から対応）
--- DELETE: ポリシーなし（service_role のみ）
+-- ポリシーなし = anon/authenticated クライアントから INSERT 不可 ✅
+-- (service_role は RLS バイパス)
 
 
 -- ============================================================
 -- review_images
--- 対処: INSERT の WITH CHECK(true) に意味のある条件を追加
---
--- ⚠️  review.ts が supabase (anon) を使っているため anon 許可を維持。
---     review.ts を supabaseAdmin に変更後は DROP して構わない。
+-- 対処: 旧 WITH CHECK(true) ポリシーを削除
+-- 理由: actions/review.ts を supabaseAdmin に移行済み。
+-- review_images_public_read (EXISTS(status='public')) は正しい → 変更なし
 -- ============================================================
 DROP POLICY IF EXISTS "review_images_insert" ON review_images;
-
--- INSERT: 存在するレビューへの画像追加のみ許可
--- review.ts を supabaseAdmin に変更後は削除可
-CREATE POLICY "review_images_insert" ON review_images
-  FOR INSERT TO anon, authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM reviews
-      WHERE reviews.id = review_id
-    )
-  );
+-- ポリシーなし = anon/authenticated クライアントから INSERT 不可 ✅
 
 
 -- ============================================================
 -- reports
--- 対処: "Allow all on reports" を削除し、用途別に分割
+-- 対処: "Allow all on reports" を削除し、INSERT のみ anon 許可
+-- 理由: LINE Bot / Web 通報フォームは anon から INSERT する可能性がある。
+--       UPDATE/DELETE は管理画面(service_role)のみ。
+-- reports_public_read (USING(is_public = true)) は正しい → 変更なし
 -- ============================================================
 DROP POLICY IF EXISTS "Allow all on reports" ON reports;
--- reports_public_read (USING(is_public = true)) は正しいので変更なし
 
--- INSERT: anon + authenticated（LINE Bot は service_role でバイパス済み。
---         Web フォームが anon クライアントを使う場合のため残す）
+-- INSERT: anon + authenticated 許可
+-- category / report_type の値は DB の CHECK 制約で保護されている
 CREATE POLICY "reports_insert" ON reports
   FOR INSERT TO anon, authenticated
   WITH CHECK (true);
--- ↑ reports INSERT に意味のある制約を掛けるには
---   category/report_type の値チェックが最低限有効だが、
---   CHECK 制約が既にカラムに存在するため WITH CHECK(true) でも二重保護される。
 
--- UPDATE / DELETE: ポリシーなし（service_role のみ — 管理画面から対応）
+-- UPDATE / DELETE: ポリシーなし（service_role のみ）
 
 
 -- ============================================================
@@ -153,9 +115,6 @@ CREATE POLICY "reports_insert" ON reports
 -- ============================================================
 DROP POLICY IF EXISTS "events_anon_read" ON events;
 
--- SELECT: cancelled 以外のイベントを公開（過去のイベントも表示する方針）
--- もし開催予定・開催中のみ表示したい場合は:
---   USING (status IN ('upcoming', 'ongoing'))
 CREATE POLICY "events_public_read" ON events
   FOR SELECT TO anon, authenticated
   USING (status <> 'cancelled');
@@ -165,11 +124,9 @@ CREATE POLICY "events_public_read" ON events
 
 -- ============================================================
 -- Cat-4: Function Search Path Mutable の修正
--- generate_report_number と update_updated_at に
--- SET search_path = public, pg_temp を追加
+-- generate_report_number / update_updated_at に SET search_path 追加
 -- ============================================================
 
--- generate_report_number（006_fix_reports_coins_rls.sql の最新版を上書き）
 CREATE OR REPLACE FUNCTION public.generate_report_number()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -191,7 +148,6 @@ BEGIN
 END;
 $$;
 
--- update_updated_at（DB 上に存在する想定。search_path を追加して上書き）
 CREATE OR REPLACE FUNCTION public.update_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -205,49 +161,92 @@ $$;
 
 
 -- ============================================================
--- Cat-2: Storage バケットリスト制限
+-- Cat-2: Storage バケット設定
 --
--- ⚠️ 以下のクエリを Supabase SQL Editor で先に実行し、
---    実際のポリシー名を確認してから DROP すること:
---
---   SELECT policyname, cmd, qual, with_check, roles
---   FROM pg_policies
---   WHERE schemaname = 'storage' AND tablename = 'objects'
---   ORDER BY policyname;
---
--- 方針:
---   - 公開 CDN URL (publicUrl) は RLS を経由しないため画像表示は影響なし
---   - supabase.storage.list() を anon から呼べないよう制限する
---   - admin (service_role) は RLS バイパスのため影響なし
---
--- ポリシー名確認後に実行する DROP の例（名前は実際のものに置き換える）:
---
--- DROP POLICY IF EXISTS "Give public access to spots bucket" ON storage.objects;
--- DROP POLICY IF EXISTS "Public Access"                      ON storage.objects;
--- ... (実際の名前に合わせること)
---
--- 削除後の代替ポリシー（list() を admin のみに制限、CDN アクセスは継続）:
---
--- spots: 管理画面(supabaseAdmin)がリストを使う → service_role で対応済み
--- anon/authenticated クライアントからのリスト取得は不可にする
---
--- CREATE POLICY "spots_no_anon_list" ON storage.objects
---   FOR SELECT TO anon, authenticated
---   USING (
---     bucket_id = 'spots'
---     AND name ~ '\.[a-zA-Z0-9]{2,5}$'  -- 拡張子付きファイルのみ（フォルダ一覧を防ぐ）
---   );
---
--- reviews バケット（ReviewForm が anon upload するため SELECT も維持）:
--- CREATE POLICY "reviews_objects_read" ON storage.objects
---   FOR SELECT TO anon, authenticated
---   USING (bucket_id = 'reviews' AND name ~ '\.[a-zA-Z0-9]{2,5}$');
---
--- articles / events / reports バケット（管理専用 → ポリシーなし = service_role のみ）:
--- DROP POLICY IF EXISTS "Give public access to articles bucket" ON storage.objects;
--- DROP POLICY IF EXISTS "Give public access to events bucket"   ON storage.objects;
--- DROP POLICY IF EXISTS "Give public access to reports bucket"  ON storage.objects;
+-- 【バケット共通制限】
+--   file_size_limit: 10MB
+--   allowed_mime_types: jpeg / png / webp / heic のみ
 -- ============================================================
+UPDATE storage.buckets
+SET
+  file_size_limit      = 10485760,
+  allowed_mime_types   = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic']
+WHERE id IN ('reviews', 'events', 'articles', 'spots', 'reports');
+
+
+-- ============================================================
+-- Cat-2: Storage 既存ポリシー全廃（23件）
+--
+-- 確認済み事実:
+--   - 全5バケット public = true
+--   - getPublicUrl() による URL 直アクセスは RLS を経由しない
+--     → SELECT ポリシー全 DROP でも画像表示は壊れない
+--   - storage.list() 呼び出し箇所はコードベースにゼロ
+--     → SELECT ポリシーを残す理由なし（残すと Cat-2 警告が残る）
+--   - UPDATE/DELETE はポリシーなし → service_role 専用
+-- ============================================================
+
+-- DELETE (5)
+DROP POLICY IF EXISTS "Allow delete from events"   ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete articles" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete reports"  ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete reviews"  ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete spots"    ON storage.objects;
+
+-- INSERT (7)
+DROP POLICY IF EXISTS "Allow public upload to events"  ON storage.objects;
+DROP POLICY IF EXISTS "Allow public upload to reviews" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public upload to spots"   ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload articles"     ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload reports"      ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload reviews"      ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload spots"        ON storage.objects;
+
+-- SELECT (7) — public bucket のため全 DROP。URL 直アクセスは引き続き有効
+DROP POLICY IF EXISTS "Allow public read from events"  ON storage.objects;
+DROP POLICY IF EXISTS "Allow public read from reviews" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public read from spots"   ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can read articles"       ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can read reports"        ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can read reviews"        ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can read spots"          ON storage.objects;
+
+-- UPDATE (4)
+DROP POLICY IF EXISTS "Anyone can update articles" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can update reports"  ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can update reviews"  ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can update spots"    ON storage.objects;
+
+
+-- ============================================================
+-- Cat-2: Storage アップロードポリシー（INSERT）
+--
+-- 【方針A: anon upload 許可】
+--   auth.uid() が常に NULL のため supabase ネイティブ RLS で
+--   admin 判定が不可。EventForm / ArticleEditor が anon クライアントから
+--   直接 upload しているため、anon を許可する。
+--   ⚠️ TODO: EventForm.tsx / ArticleEditor.tsx を server action 経由に移行し、
+--            supabaseAdmin upload に変更することで anon upload を廃止できる。
+--   spots バケット: /api/admin/upload-image → supabaseAdmin → RLS バイパス済み。ポリシー不要。
+--   reports バケット: service_role 経由のみ。ポリシー不要。
+-- ============================================================
+
+-- reviews バケット: 口コミ写真（ReviewForm.tsx が anon client で upload）
+CREATE POLICY "reviews_objects_insert" ON storage.objects
+  FOR INSERT TO anon, authenticated
+  WITH CHECK (bucket_id = 'reviews');
+
+-- events バケット: イベント画像（EventForm.tsx が anon client で upload）
+-- TODO: EventForm.tsx を server action 経由に移行後、このポリシーを削除
+CREATE POLICY "events_objects_insert" ON storage.objects
+  FOR INSERT TO anon, authenticated
+  WITH CHECK (bucket_id = 'events');
+
+-- articles バケット: 記事カバー画像（ArticleEditor.tsx が anon client で upload）
+-- TODO: ArticleEditor.tsx を server action 経由に移行後、このポリシーを削除
+CREATE POLICY "articles_objects_insert" ON storage.objects
+  FOR INSERT TO anon, authenticated
+  WITH CHECK (bucket_id = 'articles');
 
 
 -- ============================================================
@@ -262,13 +261,15 @@ $$;
 --
 -- □ 未ログインでスポット一覧・詳細が表示される（spots SELECT）
 -- □ 未ログインで口コミが読める（reviews_public_read）
--- □ ログイン済みで口コミを投稿できる（reviews_insert）
--- □ 口コミに写真を添付して投稿できる（review_images_insert + storage）
+-- □ ログイン済みで口コミを投稿できる（submitReview → supabaseAdmin）
+-- □ 口コミに写真を添付して投稿できる（reviews storage upload + review_images INSERT）
 -- □ 管理画面でスポット一覧が表示される
 -- □ 管理画面でユーザー一覧が表示される
 -- □ 事業者割り当てが保存・削除できる
--- □ お気に入り追加・削除ができる
+-- □ お気に入り追加・削除ができる（toggleFavorite → supabaseAdmin）
 -- □ LINE Bot から通報が送信できる
 -- □ イベント一覧が表示される（cancelled 除外を確認）
+-- □ 管理画面でイベント画像をアップロードできる（events storage）
+-- □ 管理画面で記事カバー画像をアップロードできる（articles storage）
 -- □ Security Advisor を再実行して警告ゼロを確認
 -- ============================================================

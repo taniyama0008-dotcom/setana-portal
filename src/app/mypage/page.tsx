@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { supabase } from '@/lib/supabase'
 import { getSessionUserId } from '@/lib/session'
 import MyPageProfile from './MyPageProfile'
 
@@ -48,7 +47,7 @@ export default async function MyPage() {
       .eq('user_id', uid)
       .order('created_at', { ascending: false })
       .limit(20),
-    supabase
+    supabaseAdmin
       .from('favorites')
       .select('spot_id, spots(id, name, slug, section, area, cover_image, category)')
       .eq('user_id', uid)
