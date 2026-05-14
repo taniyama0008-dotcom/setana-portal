@@ -8,6 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
+import { useRouter } from 'next/navigation'
 import { getLiff, type LiffProfile } from '@/lib/liff'
 
 interface LiffContextValue {
@@ -33,6 +34,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isSynced, setIsSynced]     = useState(false)
   const [profile, setProfile]       = useState<LiffProfile | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     // React Strict Mode のダブル呼び出しに対応するキャンセルフラグ
@@ -51,6 +53,13 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 
       const loggedIn = liff.isLoggedIn()
       console.log('[LIFF] LiffContext — isLoggedIn:', loggedIn)
+
+      if (!loggedIn) {
+        // LIFF が未ログインのとき、期限切れなどで残ったサーバー Cookie を消去して
+        // サーバーコンポーネントを再描画する（ReviewForm 等の desync を防ぐ）
+        await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+        if (!cancelled) router.refresh()
+      }
 
       setIsLoggedIn(loggedIn)
 
