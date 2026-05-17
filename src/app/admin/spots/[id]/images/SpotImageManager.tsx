@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import Image from 'next/image'
 import type { SpotImage } from '@/lib/types'
-import { deleteSpotImageWithPromotion, moveSpotImageUp, moveSpotImageDown, updateSpotImageType } from '@/app/actions/admin'
+import { deleteSpotImageWithPromotion, moveSpotImageUp, moveSpotImageDown, updateSpotImageType, updateSpotImageAlt } from '@/app/actions/admin'
 import { syncSpotCoverImage } from '@/app/actions/spotCover'
 
 const MAX = 20
@@ -33,6 +33,7 @@ export default function SpotImageManager({
 }) {
   const [images, setImages]           = useState(initialImages)
   const [imageType, setImageType]     = useState<ImageType>('inline')
+  const [uploadAltText, setUploadAltText] = useState('')
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null)
   const [isPending, start]            = useTransition()
   const [uploadProgress, setProgress] = useState<{ done: number; total: number } | null>(null)
@@ -58,7 +59,7 @@ export default function SpotImageManager({
         fd.append('spotId',    spotId)
         fd.append('spotSlug',  spotSlug)
         fd.append('imageType', imageType)
-        fd.append('altText',   '')
+        fd.append('altText',   uploadAltText.trim())
 
         const res = await fetch('/api/admin/upload-image', { method: 'POST', body: fd })
         if (!res.ok) {
@@ -107,6 +108,25 @@ export default function SpotImageManager({
         </div>
         <p className="text-[11px] text-[#8a8a8a] mt-2.5">
           サーバー側でリサイズ・WebP変換・EXIF削除（位置情報除去）を行います。
+        </p>
+      </div>
+
+      {/* ── alt テキスト（アップロード前に設定） ── */}
+      <div className="bg-white border border-[#e0e0e0] rounded-[8px] p-5">
+        <label htmlFor="upload-alt-text" className="block text-[13px] font-medium text-[#5c5c5c] mb-1.5">
+          alt テキスト <span className="text-[#8a8a8a] font-normal">（省略可 · 最大100文字）</span>
+        </label>
+        <input
+          id="upload-alt-text"
+          type="text"
+          maxLength={100}
+          value={uploadAltText}
+          onChange={(e) => setUploadAltText(e.target.value)}
+          placeholder='例「あわび山荘の活あわび刺身、地元水揚げの鮮度抜群」'
+          className="w-full border border-[#e0e0e0] focus:border-[#5b7e95] rounded-[6px] px-3 py-2 text-[13px] text-[#1a1a1a] placeholder:text-[#c0c0c0] outline-none transition-colors"
+        />
+        <p className="text-[11px] text-[#8a8a8a] mt-1.5">
+          アップロードする画像に一括で設定されます。後から個別に変更できます。
         </p>
       </div>
 
@@ -182,9 +202,25 @@ export default function SpotImageManager({
                 unoptimized
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] text-[#1a1a1a] truncate">{img.image_url}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {img.alt_text && <p className="text-[11px] text-[#8a8a8a]">{img.alt_text}</p>}
+                <p className="text-[12px] text-[#1a1a1a] truncate mb-1">{img.image_url}</p>
+                {/* alt テキスト inline edit */}
+                <input
+                  type="text"
+                  maxLength={100}
+                  defaultValue={img.alt_text ?? ''}
+                  placeholder="alt テキストを入力（省略可）"
+                  className="w-full border border-[#e0e0e0] focus:border-[#5b7e95] rounded-[4px] px-2 py-1 text-[11px] text-[#1a1a1a] placeholder:text-[#c8c8c8] outline-none transition-colors mb-1"
+                  onBlur={(e) => {
+                    const newAlt = e.currentTarget.value.trim()
+                    const prevAlt = img.alt_text ?? ''
+                    if (newAlt === prevAlt) return
+                    setImages(prev => prev.map(im =>
+                      im.id === img.id ? { ...im, alt_text: newAlt || null } : im
+                    ))
+                    start(async () => { await updateSpotImageAlt(img.id, spotId, newAlt) })
+                  }}
+                />
+                <div className="flex items-center gap-2">
                   {/* image_type バッジ — クリックでインライン編集 */}
                   {editingTypeId === img.id ? (
                     <select

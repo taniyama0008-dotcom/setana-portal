@@ -115,6 +115,16 @@ export async function addSpotImage(spotId: string, imageUrl: string, altText: st
   return { success: true }
 }
 
+export async function updateSpotImageAlt(imageId: string, spotId: string, altText: string) {
+  await assertAdmin()
+  await supabaseAdmin
+    .from('spot_images')
+    .update({ alt_text: altText || null })
+    .eq('id', imageId)
+  revalidatePath(`/admin/spots/${spotId}/images`)
+  return { success: true }
+}
+
 export async function updateSpotImageType(imageId: string, spotId: string, imageType: string) {
   await assertAdmin()
 
