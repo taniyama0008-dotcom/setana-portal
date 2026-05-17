@@ -308,6 +308,16 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
     }
   }
 
+  // FAQ / Videos（JSONB — 空配列は null で保存）
+  const parseJsonArray = (key: string): unknown[] | null => {
+    const raw = formData.get(key) as string | null
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : null
+    } catch { return null }
+  }
+
   const payload = {
     name:             str('name') ?? '',
     slug,
@@ -332,6 +342,8 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
     room_count:       int('room_count'),
     capacity:         int('capacity'),
     website:          str('website'),
+    faq:              parseJsonArray('faq_json'),
+    videos:           parseJsonArray('videos_json'),
     updated_at:       new Date().toISOString(),
   }
 

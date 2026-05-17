@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { supabase } from '@/lib/supabase'
 import { getSessionUserId } from '@/lib/session'
-import type { Spot, SpotImage } from '@/lib/types'
+import type { Spot, SpotImage, FaqItem, VideoItem } from '@/lib/types'
 import { categoryMaster, sectionBadge, areaMaster, getCategoryLabel, getCategoryPath, type Section } from '@/lib/taxonomy'
 import ReviewSection from '@/components/reviews/ReviewSection'
 import RelatedSpots from '@/components/spot/RelatedSpots'
@@ -47,6 +47,59 @@ function buildJsonLd(spot: Spot) {
     image: spot.cover_image ?? undefined,
     url: `${BASE_URL}/spot/${spot.slug}`,
   }
+}
+
+function buildFaqJsonLd(faq: FaqItem[], pageUrl: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${pageUrl}#faq`,
+    mainEntity: faq.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
+  }
+}
+
+function buildVideoJsonLd(video: VideoItem, spotName: string) {
+  const embedUrl = getEmbedUrl(video)
+  const thumbnailUrl = getYoutubeThumbnail(video)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.title || spotName,
+    description: video.title || spotName,
+    ...(embedUrl && { embedUrl }),
+    ...(thumbnailUrl && { thumbnailUrl }),
+  }
+}
+
+function getEmbedUrl(video: VideoItem): string | null {
+  const { platform, url } = video
+  if (platform === 'youtube') {
+    const watchId = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/)?.[1]
+    const shortId = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1]
+    const id = watchId ?? shortId
+    return id ? `https://www.youtube.com/embed/${id}` : null
+  }
+  if (platform === 'tiktok') {
+    const id = url.match(/video\/(\d+)/)?.[1]
+    return id ? `https://www.tiktok.com/embed/v2/${id}` : null
+  }
+  if (platform === 'instagram') {
+    const shortcode = url.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/)?.[1]
+    return shortcode ? `https://www.instagram.com/p/${shortcode}/embed/` : null
+  }
+  return null
+}
+
+function getYoutubeThumbnail(video: VideoItem): string | undefined {
+  if (video.platform !== 'youtube') return undefined
+  const watchId = video.url.match(/[?&]v=([a-zA-Z0-9_-]{11})/)?.[1]
+  const shortId = video.url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1]
+  const id = watchId ?? shortId
+  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : undefined
 }
 
 function buildBreadcrumbJsonLd(spot: Spot, trail: ReturnType<typeof resolveTrailRoute>) {
@@ -150,6 +203,10 @@ export default async function SpotPage({
   const hasMap = spot.latitude !== null && spot.longitude !== null
   const pageUrl = `${BASE_URL}/spot/${spot.slug}`
 
+  const faq    = (Array.isArray(spot.faq)    ? spot.faq    : []) as FaqItem[]
+  const videos = (Array.isArray(spot.videos) ? spot.videos : []) as VideoItem[]
+  const validVideos = videos.filter((v) => getEmbedUrl(v) !== null)
+
   // 全カテゴリラベル（プライマリ + サブ）
   const allCategoryLabels = [spot.primary_category, ...(spot.sub_categories ?? [])]
     .map((k) => getCategoryLabel(spot.section as Section, k))
@@ -160,6 +217,12 @@ export default async function SpotPage({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(spot)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBreadcrumbJsonLd(spot, trail)) }} />
+      {faq.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(faq, pageUrl)) }} />
+      )}
+      {validVideos.map((v, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildVideoJsonLd(v, spot.name)) }} />
+      ))}
 
       {/* 写真ギャラリー */}
       <SpotGallery
@@ -257,6 +320,37 @@ export default async function SpotPage({
           </section>
         )}
 
+        {/* 動画 */}
+        {validVideos.length > 0 && (
+          <section className="py-10 border-b border-[#e0e0e0]">
+            <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-6 tracking-[0.03em]">動画</h2>
+            <div className="space-y-6">
+              {validVideos.map((video, i) => {
+                const embedUrl = getEmbedUrl(video)!
+                return (
+                  <div key={i}>
+                    {video.title && (
+                      <p className="text-[14px] font-medium text-[#1a1a1a] mb-3 tracking-[0.03em]">{video.title}</p>
+                    )}
+                    <div className="rounded-[8px] overflow-hidden aspect-video">
+                      <iframe
+                        src={embedUrl}
+                        title={video.title || `${spot.name} 動画 ${i + 1}`}
+                        width="100%"
+                        height="100%"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        loading="lazy"
+                        style={{ border: 0 }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
         {/* 基本情報テーブル */}
         {hasBasicInfo && (
           <section className="py-10 border-b border-[#e0e0e0]">
@@ -270,6 +364,37 @@ export default async function SpotPage({
                 <InfoRow label="定休日" value={spot.holidays} />
               </tbody>
             </table>
+          </section>
+        )}
+
+        {/* FAQ */}
+        {faq.length > 0 && (
+          <section className="py-10 border-b border-[#e0e0e0]">
+            <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-6 tracking-[0.03em]">よくある質問</h2>
+            <div className="space-y-2">
+              {faq.map((item, i) => (
+                <details key={i} className="group border border-[#e0e0e0] rounded-[8px] overflow-hidden">
+                  <summary className="flex items-center gap-3 px-5 py-4 cursor-pointer list-none hover:bg-[#faf8f5] transition-colors">
+                    <span className="text-[13px] font-semibold text-[#5b7e95] shrink-0 w-5">Q</span>
+                    <span className="flex-1 text-[14px] font-medium text-[#1a1a1a] leading-[1.6] tracking-[0.03em] pr-2">
+                      {item.question}
+                    </span>
+                    <svg
+                      width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      className="shrink-0 text-[#8a8a8a] group-open:rotate-180 transition-transform duration-200"
+                      aria-hidden="true"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </summary>
+                  <div className="flex gap-3 px-5 pb-5 pt-1 bg-[#faf8f5]">
+                    <span className="text-[13px] font-semibold text-[#c47e4f] shrink-0 w-5 pt-0.5">A</span>
+                    <p className="text-[14px] text-[#1a1a1a] leading-[1.85] tracking-[0.05em]">{item.answer}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
           </section>
         )}
 

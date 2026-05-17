@@ -9,6 +9,17 @@ export type SpotStatus    = 'public' | 'draft' | 'review'
 export type ArticleStatus = 'public' | 'draft'
 export type ArticleCategory = 'story' | 'job_feature' | 'iju' | 'course' | 'special' | 'producer' | 'recipe' | 'guide'
 
+export interface FaqItem {
+  question: string
+  answer: string
+}
+
+export interface VideoItem {
+  platform: string  // 'youtube' | 'tiktok' | 'instagram'
+  url: string
+  title: string
+}
+
 export interface Spot {
   id: string
   name: string
@@ -39,6 +50,8 @@ export interface Spot {
   room_count?: number | null
   capacity?: number | null
   website?: string | null
+  faq?: FaqItem[] | null
+  videos?: VideoItem[] | null
 }
 
 export type EventStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import type { Spot } from '@/lib/types'
+import type { Spot, FaqItem, VideoItem } from '@/lib/types'
 import { updateSpot } from '@/app/actions/admin'
 import { categoryMaster, areaMaster, getCategoriesForSection, type Section } from '@/lib/taxonomy'
 
@@ -40,6 +40,8 @@ export default function SpotEditForm({
   const [state, action, isPending] = useActionState(updateSpot, null)
   const [selectedSection, setSelectedSection] = useState<Section>(spot.section)
   const [subCategories, setSubCategories] = useState<string[]>(spot.sub_categories ?? [])
+  const [faqItems, setFaqItems] = useState<FaqItem[]>(Array.isArray(spot.faq) ? spot.faq : [])
+  const [videoItems, setVideoItems] = useState<VideoItem[]>(Array.isArray(spot.videos) ? spot.videos : [])
 
   const categoryEntries = getCategoriesForSection(selectedSection)
 
@@ -47,6 +49,36 @@ export default function SpotEditForm({
   function handleSectionChange(newSection: Section) {
     setSelectedSection(newSection)
     setSubCategories([])
+  }
+
+  // ─── FAQ ────────────────────────────────────────────────
+  function addFaq() {
+    if (faqItems.length >= 10) return
+    setFaqItems(prev => [...prev, { question: '', answer: '' }])
+  }
+  function removeFaq(i: number) {
+    setFaqItems(prev => prev.filter((_, idx) => idx !== i))
+  }
+  function updateFaq(i: number, field: keyof FaqItem, value: string) {
+    setFaqItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
+  }
+
+  // ─── 動画 ───────────────────────────────────────────────
+  function detectPlatform(url: string): string {
+    if (/youtube\.com|youtu\.be/.test(url)) return 'youtube'
+    if (/tiktok\.com/.test(url)) return 'tiktok'
+    if (/instagram\.com/.test(url)) return 'instagram'
+    return ''
+  }
+  function addVideo() {
+    if (videoItems.length >= 3) return
+    setVideoItems(prev => [...prev, { platform: '', url: '', title: '' }])
+  }
+  function removeVideo(i: number) {
+    setVideoItems(prev => prev.filter((_, idx) => idx !== i))
+  }
+  function updateVideo(i: number, field: keyof VideoItem, value: string) {
+    setVideoItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
   }
 
   function toggleSubCategory(key: string) {
@@ -276,6 +308,107 @@ export default function SpotEditForm({
             </label>
           </div>
         </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <input type="hidden" name="faq_json" value={JSON.stringify(faqItems)} />
+      <section>
+        <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-1">FAQ（よくある質問）</h2>
+        <p className="text-[12px] text-[#8a8a8a] mb-4">最大10件。0件の場合はスポットページに表示されません。</p>
+        <div className="space-y-3">
+          {faqItems.map((item, i) => (
+            <div key={i} className="border border-[#e0e0e0] rounded-[8px] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-[#5b7e95] w-6">Q{i + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => removeFaq(i)}
+                  className="ml-auto text-[11px] text-[#8a8a8a] hover:text-[#d94f4f] transition-colors"
+                >
+                  削除
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="質問"
+                value={item.question}
+                onChange={(e) => updateFaq(i, 'question', e.target.value)}
+                className={inputClass}
+              />
+              <textarea
+                placeholder="回答"
+                value={item.answer}
+                onChange={(e) => updateFaq(i, 'answer', e.target.value)}
+                rows={3}
+                className={`${inputClass} resize-none leading-[1.8]`}
+              />
+            </div>
+          ))}
+        </div>
+        {faqItems.length < 10 && (
+          <button
+            type="button"
+            onClick={addFaq}
+            className="mt-3 text-[13px] text-[#5b7e95] hover:text-[#3d5a6e] border border-[#5b7e95]/30 hover:border-[#5b7e95]/60 rounded-[6px] px-4 py-2 transition-colors"
+          >
+            + FAQ を追加
+          </button>
+        )}
+      </section>
+
+      {/* ── 動画 ── */}
+      <input type="hidden" name="videos_json" value={JSON.stringify(videoItems)} />
+      <section>
+        <h2 className="text-[13px] font-semibold text-[#8a8a8a] tracking-[0.08em] uppercase mb-1">動画</h2>
+        <p className="text-[12px] text-[#8a8a8a] mb-4">YouTube・TikTok・Instagram の URL を貼るだけで埋め込まれます。最大3件。</p>
+        <div className="space-y-3">
+          {videoItems.map((item, i) => (
+            <div key={i} className="border border-[#e0e0e0] rounded-[8px] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-[#8a8a8a]">動画 {i + 1}</span>
+                {item.platform && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#e8f0f4] text-[#4a6e83] font-medium">
+                    {item.platform}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeVideo(i)}
+                  className="ml-auto text-[11px] text-[#8a8a8a] hover:text-[#d94f4f] transition-colors"
+                >
+                  削除
+                </button>
+              </div>
+              <input
+                type="url"
+                placeholder="動画URL（例：https://www.youtube.com/watch?v=...）"
+                value={item.url}
+                onChange={(e) => updateVideo(i, 'url', e.target.value)}
+                onBlur={(e) => {
+                  const platform = detectPlatform(e.target.value)
+                  if (platform && platform !== item.platform) updateVideo(i, 'platform', platform)
+                }}
+                className={inputClass}
+              />
+              <input
+                type="text"
+                placeholder="タイトル（省略可）"
+                value={item.title}
+                onChange={(e) => updateVideo(i, 'title', e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          ))}
+        </div>
+        {videoItems.length < 3 && (
+          <button
+            type="button"
+            onClick={addVideo}
+            className="mt-3 text-[13px] text-[#5b7e95] hover:text-[#3d5a6e] border border-[#5b7e95]/30 hover:border-[#5b7e95]/60 rounded-[6px] px-4 py-2 transition-colors"
+          >
+            + 動画を追加
+          </button>
+        )}
       </section>
 
       {/* ── カバー画像 ── */}
