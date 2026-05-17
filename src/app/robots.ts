@@ -6,6 +6,9 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://www.setana.life/sitemap.xml',
+    sitemap: [
+      'https://www.setana.life/sitemap.xml',
+      'https://www.setana.life/sitemap-news.xml',
+    ],
   }
 }
