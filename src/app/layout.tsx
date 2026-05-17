@@ -37,6 +37,23 @@ export const metadata: Metadata = {
   },
 }
 
+const globalOrganizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://www.setana.life/#organization',
+  name: '株式会社つなぐ',
+  url: 'https://www.setana.life',
+  sameAs: ['https://www.setana.life/about'],
+  address: {
+    '@type': 'PostalAddress',
+    addressRegion: '北海道',
+    addressLocality: '久遠郡せたな町',
+    addressCountry: 'JP',
+  },
+  description:
+    'せたな町を拠点に「つなぐ」を事業理念とする地域会社。地域メディアSETANAの運営母体。',
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,6 +68,10 @@ export default function RootLayout({
       }}
     >
       <body className="min-h-screen flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(globalOrganizationSchema) }}
+        />
         <LiffProvider>
           <Header />
           <main className="flex-1">{children}</main>
