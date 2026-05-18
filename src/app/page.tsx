@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import SpotCard from '@/components/spot/SpotCard'
-import type { Spot, CalendarEvent, Report } from '@/lib/types'
+import type { Spot, CalendarEvent, Report, PhotoCard } from '@/lib/types'
 
 const travelCards = [
   {
@@ -128,7 +128,7 @@ const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9�
 export default async function Home() {
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: spots }, { data: upcomingEvents }, { data: publicReports }, { data: latestArticles }] = await Promise.all([
+  const [{ data: spots }, { data: upcomingEvents }, { data: publicReports }, { data: latestArticles }, { data: communityPhotosRaw }] = await Promise.all([
     supabase
       .from('spots')
       .select('*')
@@ -155,10 +155,32 @@ export default async function Home() {
       .eq('status', 'public')
       .order('created_at', { ascending: false })
       .limit(3),
+    supabaseAdmin
+      .from('photos')
+      .select('id,image_url,caption,visit_year,visit_month,is_featured,users!inner(nickname,line_display_name),spots(name,slug)')
+      .eq('status', 'public')
+      .order('created_at', { ascending: false })
+      .limit(9),
   ])
 
   const events  = (upcomingEvents ?? []) as CalendarEvent[]
   const reports = (publicReports ?? []) as Report[]
+
+  const communityPhotos = (communityPhotosRaw ?? []).map((row: any) => {
+    const u = row.users as { nickname?: string | null; line_display_name?: string | null } | null
+    const s = row.spots as { name?: string | null; slug?: string | null } | null
+    return {
+      id:          row.id as string,
+      image_url:   row.image_url as string,
+      caption:     row.caption as string | null,
+      visit_year:  row.visit_year as number | null,
+      visit_month: row.visit_month as number | null,
+      is_featured: row.is_featured as boolean,
+      nickname:    u?.nickname ?? u?.line_display_name ?? '匿名',
+      spot_name:   s?.name ?? null,
+      spot_slug:   s?.slug ?? null,
+    } satisfies PhotoCard
+  })
 
   return (
     <>
@@ -545,6 +567,65 @@ export default async function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {(spots as Spot[]).map((spot) => (
                 <SpotCard key={spot.id} spot={spot} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── みんなのせたな ─────────────────────────────────── */}
+      {communityPhotos.length > 0 && (
+        <section className="py-20 lg:py-28 px-5 lg:px-8 bg-white">
+          <div className="max-w-[1120px] mx-auto">
+            <div className="flex items-baseline gap-4 mb-8">
+              <p className="text-[#8a8a8a] text-[11px] font-medium tracking-[0.25em] nav-label">COMMUNITY</p>
+              <div className="flex-1 h-px bg-[#e0e0e0]" />
+              <Link href="/photos" className="text-[#8a8a8a] text-[12px] hover:text-[#1a1a1a] transition-colors nav-label">
+                もっと見る →
+              </Link>
+            </div>
+            <div className="flex items-end justify-between mb-10 gap-4">
+              <h2 className="text-[#1a1a1a] text-[28px] tracking-[0.02em]" style={{ fontWeight: 300 }}>
+                みんなの<span className="font-bold">せたな</span>
+              </h2>
+              <Link
+                href="/photos/new"
+                className="shrink-0 px-4 py-2.5 bg-[#1a2a35] hover:bg-[#2d4050] text-white text-[12px] font-medium rounded-[6px] transition-colors nav-label"
+              >
+                ＋ 写真を投稿
+              </Link>
+            </div>
+
+            {/* モバイル: 横スクロール / デスクトップ: グリッド */}
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-3 lg:gap-4 scrollbar-hide">
+              {communityPhotos.map((photo) => (
+                <Link
+                  key={photo.id}
+                  href={`/photos/${photo.id}`}
+                  className="group block shrink-0 w-[200px] lg:w-auto overflow-hidden rounded-[8px] bg-[#f0ece8]"
+                >
+                  <div className="relative w-[200px] h-[200px] lg:w-full lg:aspect-square overflow-hidden">
+                    <Image
+                      src={photo.image_url}
+                      alt={photo.caption ?? (photo.spot_name ? `${photo.spot_name}の写真` : 'せたなの写真')}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      unoptimized
+                      sizes="(max-width: 1024px) 200px, 33vw"
+                    />
+                    {photo.is_featured && (
+                      <span className="absolute top-2 left-2 bg-[#c47e4f] text-white text-[9px] font-medium px-1.5 py-0.5 rounded nav-label">
+                        PICK UP
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    {photo.spot_name && (
+                      <p className="text-[11px] font-medium text-[#5b7e95] truncate mb-0.5">{photo.spot_name}</p>
+                    )}
+                    <p className="text-[10px] text-[#8a8a8a] truncate">{photo.nickname}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>

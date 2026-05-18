@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getSessionUserId } from '@/lib/session'
 import MyPageProfile from './MyPageProfile'
 import MyReviewActions from './MyReviewActions'
+import MyPhotoActions from './MyPhotoActions'
 
 const sectionConfig = {
   kurashi: { label: '暮らし', bgClass: 'bg-[#5b7e95]', gradient: 'from-[#5b7e95] to-[#3d5a6e]' },
@@ -31,7 +32,7 @@ export default async function MyPage() {
   const uid = await getSessionUserId()
   if (!uid) redirect('/')
 
-  const [{ data: user }, { data: myReviews }, { data: coinTxs }, { data: favorites }] = await Promise.all([
+  const [{ data: user }, { data: myReviews }, { data: coinTxs }, { data: favorites }, { data: myPhotos }] = await Promise.all([
     supabaseAdmin
       .from('users')
       .select('id, nickname, line_display_name, line_picture_url, role, coin_balance, created_at')
@@ -51,6 +52,11 @@ export default async function MyPage() {
     supabaseAdmin
       .from('favorites')
       .select('spot_id, spots(id, name, slug, section, area, cover_image, category)')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false }),
+    supabaseAdmin
+      .from('photos')
+      .select('id, image_url, caption, status, spots(name, slug)')
       .eq('user_id', uid)
       .order('created_at', { ascending: false }),
   ])
@@ -172,6 +178,55 @@ export default async function MyPage() {
 
         <div className="my-10 border-t border-[#e0e0e0]" />
 
+        {/* 投稿した写真 */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[16px] font-semibold text-[#1a1a1a] tracking-[0.03em]">
+              投稿した写真
+              <span className="ml-2 text-[13px] font-normal text-[#8a8a8a]">{myPhotos?.length ?? 0}枚</span>
+            </h2>
+            <Link href="/photos/new" className="text-[13px] text-[#5b7e95] hover:underline">
+              ＋ 写真を投稿
+            </Link>
+          </div>
+
+          {!myPhotos?.length ? (
+            <p className="text-[14px] text-[#8a8a8a] py-4">まだ写真を投稿していません。</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {(myPhotos as any[]).map((photo) => (
+                <div key={photo.id} className="relative group">
+                  <Link href={`/photos/${photo.id}`} className="block">
+                    <div className="relative aspect-square rounded-[6px] overflow-hidden bg-[#f0ece8]">
+                      <Image
+                        src={photo.image_url}
+                        alt={photo.caption ?? '投稿写真'}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        unoptimized
+                        sizes="(max-width: 680px) 33vw, 220px"
+                      />
+                      {photo.status === 'hidden' && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <span className="text-white text-[10px] nav-label px-2 py-0.5 bg-black/60 rounded">非公開</span>
+                        </div>
+                      )}
+                    </div>
+                    {(photo.spots as any)?.name && (
+                      <p className="text-[11px] text-[#8a8a8a] mt-1 truncate">{(photo.spots as any).name}</p>
+                    )}
+                  </Link>
+                  <div className="mt-1">
+                    <MyPhotoActions photoId={photo.id} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <div className="my-10 border-t border-[#e0e0e0]" />
+
         {/* せたなコイン */}
         <section>
           <h2 className="text-[16px] font-semibold text-[#1a1a1a] tracking-[0.03em] mb-5">
@@ -207,8 +262,8 @@ export default async function MyPage() {
                 {coinTxs.map((tx: any) => {
                   const reasonLabels: Record<string, string> = {
                     report_infra: 'インフラ通報', report_info: '情報提供',
-                    photo_bonus: '写真ボーナス', review: '口コミ投稿',
-                    helpful_bonus: '役に立った', redeem: '特典交換',
+                    photo_bonus: '写真投稿', photo_featured: 'ピックアップ選出',
+                    review: '口コミ投稿', helpful_bonus: '役に立った', redeem: '特典交換',
                   }
                   return (
                     <li key={tx.id} className="flex items-center justify-between py-3 border-b border-[#efefef] last:border-0">

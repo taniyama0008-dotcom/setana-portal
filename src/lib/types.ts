@@ -136,7 +136,33 @@ export type ReportCategory =
 
 export type ReportType   = 'infrastructure' | 'realtime_info'
 export type ReportStatus = 'received' | 'confirmed' | 'in_progress' | 'resolved' | 'rejected'
-export type CoinReason   = 'report_infra' | 'report_info' | 'photo_bonus' | 'review' | 'helpful_bonus' | 'redeem'
+export type CoinReason   = 'report_infra' | 'report_info' | 'photo_bonus' | 'photo_featured' | 'review' | 'helpful_bonus' | 'redeem'
+
+export interface Photo {
+  id: string
+  user_id: string
+  spot_id: string | null
+  image_url: string
+  caption: string | null
+  visit_year: number | null
+  visit_month: number | null
+  status: 'public' | 'hidden'
+  is_featured: boolean
+  featured_at: string | null
+  created_at: string
+}
+
+export interface PhotoCard {
+  id: string
+  image_url: string
+  caption: string | null
+  visit_year: number | null
+  visit_month: number | null
+  is_featured: boolean
+  nickname: string
+  spot_name: string | null
+  spot_slug: string | null
+}
 
 export interface Report {
   id: string

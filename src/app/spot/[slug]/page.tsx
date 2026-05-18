@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import ReactMarkdown from 'react-markdown'
@@ -13,6 +14,7 @@ import AreaBadge from '@/components/spot/AreaBadge'
 import SpotGallery from '@/components/spot/SpotGallery'
 import FavoriteButton from '@/components/spot/FavoriteButton'
 import ShareButtons from '@/components/spot/ShareButtons'
+import { fetchSpotPhotos } from '@/app/actions/photo'
 
 const BASE_URL = 'https://www.setana.life'
 
@@ -176,13 +178,14 @@ export default async function SpotPage({
   const spot = await getSpot(slug)
   if (!spot) notFound()
 
-  const [{ data: spotImagesRaw }, userId] = await Promise.all([
+  const [{ data: spotImagesRaw }, userId, { photos: spotCommunityPhotos, total: spotPhotosTotal }] = await Promise.all([
     supabase
       .from('spot_images')
       .select('*')
       .eq('spot_id', spot.id)
       .order('sort_order', { ascending: true }),
     getSessionUserId(),
+    fetchSpotPhotos(spot.id, 8),
   ])
 
   let isFavorited = false
@@ -412,6 +415,55 @@ export default async function SpotPage({
                 referrerPolicy="no-referrer-when-downgrade"
                 src={`https://maps.google.com/maps?q=${spot.latitude},${spot.longitude}&z=15&output=embed`}
               />
+            </div>
+          </section>
+        )}
+
+        {/* みんなの写真 */}
+        {spotCommunityPhotos.length > 0 && (
+          <section className="py-10 border-b border-[#e0e0e0]">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[18px] font-semibold text-[#1a1a1a] tracking-[0.03em]">
+                ここで撮られた写真
+                <span className="ml-2 text-[13px] font-normal text-[#8a8a8a]">{spotPhotosTotal}枚</span>
+              </h2>
+              {spotPhotosTotal > 8 && (
+                <Link
+                  href={`/photos?spot=${spot.id}`}
+                  className="text-[13px] text-[#5b7e95] hover:underline"
+                >
+                  すべて見る →
+                </Link>
+              )}
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {spotCommunityPhotos.map((photo) => (
+                <Link
+                  key={photo.id}
+                  href={`/photos/${photo.id}`}
+                  className="group block overflow-hidden rounded-[6px] bg-[#f0ece8]"
+                >
+                  <div className="relative aspect-square overflow-hidden">
+                    <Image
+                      src={photo.image_url}
+                      alt={photo.caption ?? `${spot.name}の写真`}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      unoptimized
+                      sizes="(max-width: 860px) 25vw, 200px"
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Link
+                href="/photos/new"
+                className="inline-flex items-center gap-1.5 text-[13px] text-[#5b7e95] hover:underline"
+              >
+                <span>＋</span>
+                <span>あなたの写真を投稿する</span>
+              </Link>
             </div>
           </section>
         )}
