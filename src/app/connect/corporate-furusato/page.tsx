@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '企業版ふるさと納税｜せたな町 — 法人による地域貢献',
@@ -64,14 +68,31 @@ const jsonLd = {
   },
 }
 
-export default function CorporateFurusatoPage() {
+export default async function CorporateFurusatoPage() {
+  const setting = await getCategorySetting('connect/corporate-furusato')
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ヒーロー */}
       <section className="relative h-[50vh] min-h-[360px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f1520] via-[#1a2530] to-[#1a3028]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#0f1520', '#1a2530', '#1a3028') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-14">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-5 flex-wrap">
@@ -86,7 +107,7 @@ export default function CorporateFurusatoPage() {
             企業版<span className="font-bold">ふるさと納税</span>
           </h1>
           <p className="text-white/60 text-[15px] leading-[1.8] mt-3 max-w-[480px]">
-            法人による地域貢献。税制優遇と具体的な認定事業のご案内。
+            {setting?.description ?? '法人による地域貢献。税制優遇と具体的な認定事業のご案内。'}
           </p>
         </div>
       </section>

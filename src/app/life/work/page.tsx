@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'せたな町の求人・しごと｜移住者向け仕事情報',
@@ -20,7 +24,7 @@ const typeColor: Record<string, string> = {
 }
 
 export default async function WorkPage() {
-  const [{ data: jobs }, { count: kyoryokutaiCount }] = await Promise.all([
+  const [{ data: jobs }, { count: kyoryokutaiCount }, setting] = await Promise.all([
     supabaseAdmin
       .from('jobs')
       .select('*, spots(name)')
@@ -30,6 +34,7 @@ export default async function WorkPage() {
       .from('kyoryokutai_listings')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'published'),
+    getCategorySetting('life/work'),
   ])
 
   const list = jobs ?? []
@@ -58,7 +63,22 @@ export default async function WorkPage() {
 
       {/* ヒーロー */}
       <section className="relative h-[40vh] min-h-[280px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#5c3320] via-[#c47e4f] to-[#8a5535]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#5c3320', '#c47e4f', '#8a5535') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-12">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-4">
@@ -72,7 +92,9 @@ export default async function WorkPage() {
           <h1 className="text-white font-bold text-[28px] lg:text-[36px] leading-[1.3] tracking-[0.02em]">
             しごと・求人
           </h1>
-          <p className="text-white/60 text-[14px] mt-2">せたなで働く、せたなで生きる。</p>
+          <p className="text-white/60 text-[14px] mt-2">
+            {setting?.description ?? 'せたなで働く、せたなで生きる。'}
+          </p>
         </div>
       </section>
 

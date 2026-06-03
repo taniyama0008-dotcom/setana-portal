@@ -213,3 +213,15 @@ export interface Article {
   created_at: string
   updated_at: string
 }
+
+export interface CategorySetting {
+  id: string
+  category_path: string
+  hero_image_url: string | null
+  hero_image_alt: string | null
+  hero_gradient_from: string | null
+  hero_gradient_via: string | null
+  hero_gradient_to: string | null
+  description: string | null
+  updated_at: string
+}

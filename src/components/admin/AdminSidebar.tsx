@@ -11,8 +11,9 @@ const navItems = [
   { href: '/admin/users',   label: 'ユーザー管理',   icon: '◐' },
   { href: '/admin/reports', label: '通報・情報管理',  icon: '◉' },
   { href: '/admin/events',  label: 'イベント管理',   icon: '◈' },
-  { href: '/admin/photos',  label: '写真管理',       icon: '◈' },
-  { href: '/admin/content', label: 'コンテンツ管理', icon: '◇' },
+  { href: '/admin/photos',      label: '写真管理',       icon: '◈' },
+  { href: '/admin/content',     label: 'コンテンツ管理', icon: '◇' },
+  { href: '/admin/categories',  label: 'カテゴリ管理',   icon: '◈' },
 ]
 
 export default function AdminSidebar() {

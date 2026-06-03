@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'ファミマッチ | 「うちの子をよろしく」が届く婚活 - SETANA',
@@ -78,14 +82,31 @@ const steps = [
   },
 ]
 
-export default function FamimatchPage() {
+export default async function FamimatchPage() {
+  const setting = await getCategorySetting('connect/famimatch')
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ─── ヒーロー ──────────────────────────────────────────── */}
       <section className="relative min-h-[560px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2a1008] via-[#7a3010] to-[#b85a28]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#2a1008', '#7a3010', '#b85a28') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-16 lg:pb-24">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-6 flex-wrap">
@@ -102,10 +123,16 @@ export default function FamimatchPage() {
           >
             「うちの子をよろしく」が届く婚活
           </h1>
-          <p className="text-white/70 text-[15px] lg:text-[17px] leading-[1.9] tracking-[0.05em] max-w-[520px] mb-10">
-            せたなに住みたい人は、全国にいます。<br className="hidden sm:block" />
-            その出会いを、届けます。
-          </p>
+          {setting?.description ? (
+            <p className="text-white/70 text-[15px] lg:text-[17px] leading-[1.9] tracking-[0.05em] max-w-[520px] mb-10">
+              {setting.description}
+            </p>
+          ) : (
+            <p className="text-white/70 text-[15px] lg:text-[17px] leading-[1.9] tracking-[0.05em] max-w-[520px] mb-10">
+              せたなに住みたい人は、全国にいます。<br className="hidden sm:block" />
+              その出会いを、届けます。
+            </p>
+          )}
           <div className="flex flex-wrap gap-4">
             <a
               href="https://www.famimatch.jp/"

@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'せたな町の移住支援｜補助金・体験住宅・相談窓口',
@@ -48,7 +52,9 @@ const voices = [
   },
 ]
 
-export default function MigrationPage() {
+export default async function MigrationPage() {
+  const setting = await getCategorySetting('life/migration')
+
   return (
     <>
       <script
@@ -73,7 +79,22 @@ export default function MigrationPage() {
 
       {/* ヒーロー */}
       <section className="relative h-[40vh] min-h-[280px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a3020] via-[#6b8f71] to-[#3d5c42]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#1a3020', '#6b8f71', '#3d5c42') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-12">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-4">
@@ -85,7 +106,9 @@ export default function MigrationPage() {
           </nav>
           <p className="text-white/40 text-[11px] font-medium tracking-[0.25em] mb-2 nav-label">MIGRATION</p>
           <h1 className="text-white font-bold text-[28px] lg:text-[36px]">移住支援</h1>
-          <p className="text-white/60 text-[14px] mt-2">せたな町への移住を支援する制度・相談窓口。</p>
+          <p className="text-white/60 text-[14px] mt-2">
+            {setting?.description ?? 'せたな町への移住を支援する制度・相談窓口。'}
+          </p>
         </div>
       </section>
 

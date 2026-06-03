@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import AreaMap from '@/components/spot/AreaMap'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'せたな町へのアクセス｜札幌・函館・新千歳からの交通案内',
@@ -37,7 +41,9 @@ const winterNotes = [
   '日が短いため早朝・深夜の運転は避け、明るい時間帯に移動することをおすすめします。',
 ]
 
-export default function AccessPage() {
+export default async function AccessPage() {
+  const setting = await getCategorySetting('travel/access')
+
   return (
     <>
       <script
@@ -62,7 +68,22 @@ export default function AccessPage() {
 
       {/* ヒーロー */}
       <section className="relative h-[36vh] min-h-[240px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2a2a2a] via-[#4a4a4a] to-[#3a3a3a]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#2a2a2a', '#4a4a4a', '#3a3a3a') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-12">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-4">
@@ -74,7 +95,9 @@ export default function AccessPage() {
           </nav>
           <p className="text-white/40 text-[11px] font-medium tracking-[0.25em] mb-2 nav-label">ACCESS</p>
           <h1 className="text-white font-bold text-[28px] lg:text-[36px]">アクセス</h1>
-          <p className="text-white/60 text-[14px] mt-2">せたな町への交通案内</p>
+          <p className="text-white/60 text-[14px] mt-2">
+            {setting?.description ?? 'せたな町への交通案内'}
+          </p>
         </div>
       </section>
 

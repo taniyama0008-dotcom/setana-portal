@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { Spot } from '@/lib/types'
 import SpotListWithAreaFilter from '@/components/spot/SpotListWithAreaFilter'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'せたな町の温泉｜日帰り・宿泊温泉ガイド',
@@ -10,13 +14,16 @@ export const metadata: Metadata = {
 }
 
 export default async function OnsenPage() {
-  const { data: spots } = await supabase
-    .from('spots')
-    .select('*')
-    .eq('status', 'public')
-    .eq('section', 'travel')
-    .or('primary_category.eq.onsen,sub_categories.cs.{onsen}')
-    .order('created_at', { ascending: false })
+  const [{ data: spots }, setting] = await Promise.all([
+    supabase
+      .from('spots')
+      .select('*')
+      .eq('status', 'public')
+      .eq('section', 'travel')
+      .or('primary_category.eq.onsen,sub_categories.cs.{onsen}')
+      .order('created_at', { ascending: false }),
+    getCategorySetting('travel/onsen'),
+  ])
 
   const list = ((spots ?? []) as Spot[]).sort((a, b) => {
     const ao = (a.spot_order?.onsen) ?? 999
@@ -48,7 +55,22 @@ export default async function OnsenPage() {
 
       {/* ヒーロー */}
       <section className="relative h-[40vh] min-h-[280px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2e3d] via-[#5b7e95] to-[#3d5a6e]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#1a2e3d', '#5b7e95', '#3d5a6e') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-12">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-4">
@@ -62,7 +84,9 @@ export default async function OnsenPage() {
           <h1 className="text-white font-bold text-[28px] lg:text-[36px] leading-[1.3] tracking-[0.02em]">
             温泉
           </h1>
-          <p className="text-white/60 text-[14px] mt-2">旅の疲れを癒す、せたなの湯。日帰り・宿泊施設。</p>
+          <p className="text-white/60 text-[14px] mt-2">
+            {setting?.description ?? '旅の疲れを癒す、せたなの湯。日帰り・宿泊施設。'}
+          </p>
         </div>
       </section>
 

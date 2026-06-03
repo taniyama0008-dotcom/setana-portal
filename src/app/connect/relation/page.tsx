@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { getCategorySetting, buildGradient } from '@/lib/category-settings'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '関係人口として関わる｜せたな町 — 二拠点・ワーケーション・ボランティア',
@@ -48,14 +52,31 @@ const jsonLd = {
   },
 }
 
-export default function RelationPage() {
+export default async function RelationPage() {
+  const setting = await getCategorySetting('connect/relation')
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ヒーロー */}
       <section className="relative h-[50vh] min-h-[360px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2820] via-[#2d4028] to-[#1a3028]" />
+        {setting?.hero_image_url ? (
+          <Image
+            src={setting.hero_image_url}
+            alt={setting.hero_image_alt ?? ''}
+            fill
+            priority
+            className="object-cover"
+            unoptimized
+            sizes="100vw"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(setting, '#1a2820', '#2d4028', '#1a3028') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-14">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-5 flex-wrap">
@@ -70,7 +91,7 @@ export default function RelationPage() {
             関係人口として<span className="font-bold">関わる</span>
           </h1>
           <p className="text-white/60 text-[15px] leading-[1.8] mt-3 max-w-[480px]">
-            移住の前に、せたなと関わるもう一つの選択肢。二拠点・ワーケーション・ボランティア。
+            {setting?.description ?? '移住の前に、せたなと関わるもう一つの選択肢。二拠点・ワーケーション・ボランティア。'}
           </p>
         </div>
       </section>
