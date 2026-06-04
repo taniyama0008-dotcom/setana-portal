@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import SpotCard from '@/components/spot/SpotCard'
 import type { Spot } from '@/lib/types'
+import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
 
 export const metadata: Metadata = {
   title: 'せたな町を旅する｜グルメ・温泉・自然の観光ガイド',
@@ -15,35 +17,42 @@ const subSections = [
     label: 'グルメ',
     labelEn: 'GOURMET',
     description: '日本海の幸、山の幸。地元食堂・海鮮・カフェ。',
-    gradient: 'from-[#c47e4f] to-[#8a5535]',
+    fallbackFrom: '#5c3320', fallbackVia: '#c47e4f', fallbackTo: '#8a5535',
   },
   {
     href: '/travel/nature',
     label: '観光・自然',
     labelEn: 'NATURE',
     description: '三本杉岩、狩場山、チャレンカの滝。せたなの大自然。',
-    gradient: 'from-[#6b8f71] to-[#3d5c42]',
+    fallbackFrom: '#1a3020', fallbackVia: '#6b8f71', fallbackTo: '#3d5c42',
   },
   {
     href: '/travel/onsen',
     label: '温泉',
     labelEn: 'ONSEN',
     description: '旅の疲れを癒す、日帰り温泉・宿泊温泉。',
-    gradient: 'from-[#5b7e95] to-[#3d5a6e]',
+    fallbackFrom: '#1a2e3d', fallbackVia: '#5b7e95', fallbackTo: '#3d5a6e',
   },
   {
     href: '/travel/stay',
     label: '泊まる',
     labelEn: 'STAY',
     description: 'ホテル・旅館・民宿・キャンプ場の一覧。',
-    gradient: 'from-[#3d5a6e] to-[#2a3f50]',
+    fallbackFrom: '#1a2535', fallbackVia: '#3d5a6e', fallbackTo: '#2a3f50',
   },
   {
     href: '/travel/access',
     label: 'アクセス',
     labelEn: 'ACCESS',
     description: '札幌・函館・新千歳空港からの交通案内。',
-    gradient: 'from-[#6e6e6e] to-[#3a3a3a]',
+    fallbackFrom: '#2a2a2a', fallbackVia: '#4a4a4a', fallbackTo: '#3a3a3a',
+  },
+  {
+    href: '/travel/fishing',
+    label: '釣り',
+    labelEn: 'FISHING',
+    description: '日本海で楽しむ磯釣り・船釣り。',
+    fallbackFrom: '#1a2e20', fallbackVia: '#2d5c3a', fallbackTo: '#1a3040',
   },
 ]
 
@@ -63,13 +72,18 @@ const jsonLd = {
 }
 
 export default async function TravelPage() {
-  const { data: spots } = await supabase
-    .from('spots')
-    .select('*')
-    .eq('status', 'public')
-    .in('section', ['shoku', 'shizen'])
-    .order('created_at', { ascending: false })
-    .limit(6)
+  const [{ data: spots }, catSettings] = await Promise.all([
+    supabase
+      .from('spots')
+      .select('*')
+      .eq('status', 'public')
+      .in('section', ['shoku', 'shizen'])
+      .order('created_at', { ascending: false })
+      .limit(6),
+    getAllCategorySettings(),
+  ])
+
+  const heroCs = catSettings['travel']
 
   return (
     <>
@@ -77,7 +91,21 @@ export default async function TravelPage() {
 
       {/* ヒーロー */}
       <section className="relative h-[50vh] min-h-[360px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a35] via-[#2d4a5e] to-[#1a2a20]" />
+        {heroCs?.hero_image_url ? (
+          <Image
+            src={heroCs.hero_image_url}
+            alt={heroCs.hero_image_alt || 'せたな町を旅する'}
+            fill
+            priority
+            className="object-cover object-center"
+            unoptimized
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(heroCs, '#1a2a35', '#2d4a5e', '#1a2a20') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-14">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-5">
@@ -99,25 +127,46 @@ export default async function TravelPage() {
       <section className="py-16 lg:py-24 px-5 lg:px-8 bg-white">
         <div className="max-w-[1120px] mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
-            {subSections.map((sec, i) => (
-              <Link
-                key={sec.href}
-                href={sec.href}
-                className={`group block ${i === 0 ? 'col-span-2 lg:col-span-2' : 'col-span-1'}`}
-              >
-                <div className="relative overflow-hidden rounded-[8px]">
-                  <div className={`bg-gradient-to-br ${sec.gradient} ${i === 0 ? 'h-48 lg:h-52' : 'h-32 lg:h-40'} group-hover:scale-[1.02] transition-transform duration-500`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <p className="text-white/50 text-[10px] font-medium tracking-[0.2em] mb-1 nav-label">{sec.labelEn}</p>
-                    <p className="text-white font-bold text-[16px]">{sec.label}</p>
-                    {i === 0 && (
-                      <p className="text-white/60 text-[12px] mt-1 leading-[1.6]">{sec.description}</p>
+            {subSections.map((sec, i) => {
+              const cs = catSettings[sec.href.replace(/^\//, '')]
+              const bg = buildGradient(cs, sec.fallbackFrom, sec.fallbackVia, sec.fallbackTo)
+              const heroUrl = cs?.hero_image_url
+              return (
+                <Link
+                  key={sec.href}
+                  href={sec.href}
+                  className={`group block ${i === 0 ? 'col-span-2 lg:col-span-2' : 'col-span-1'}`}
+                >
+                  <div className="relative overflow-hidden rounded-[8px]">
+                    {heroUrl ? (
+                      <div className={`relative ${i === 0 ? 'h-48 lg:h-52' : 'h-32 lg:h-40'}`}>
+                        <Image
+                          src={heroUrl}
+                          alt={cs?.hero_image_alt || sec.label}
+                          fill
+                          className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+                          unoptimized
+                          sizes={i === 0 ? '(max-width: 1024px) 100vw, 448px' : '(max-width: 1024px) 50vw, 168px'}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`${i === 0 ? 'h-48 lg:h-52' : 'h-32 lg:h-40'} group-hover:scale-[1.02] transition-transform duration-500`}
+                        style={{ background: bg }}
+                      />
                     )}
+                    <div className={`absolute inset-0 bg-gradient-to-t ${heroUrl ? 'from-black/70 via-black/40 to-black/10' : 'from-black/70 via-black/20 to-transparent'}`} />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="text-white/50 text-[10px] font-medium tracking-[0.2em] mb-1 nav-label">{sec.labelEn}</p>
+                      <p className="text-white font-bold text-[16px]">{sec.label}</p>
+                      {i === 0 && (
+                        <p className="text-white/60 text-[12px] mt-1 leading-[1.6]">{sec.description}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>

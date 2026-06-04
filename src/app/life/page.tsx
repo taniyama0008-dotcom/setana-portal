@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
 
 export const metadata: Metadata = {
   title: 'せたな町に暮らす｜移住・仕事・生活情報',
@@ -12,7 +14,7 @@ const sections = [
     label: 'しごと・求人',
     labelEn: 'WORK',
     description: '正規雇用から季節労働、地域おこし協力隊まで。せたなで働くすべての情報をまとめています。',
-    gradient: 'from-[#5c3320] via-[#c47e4f] to-[#8a5535]',
+    fallbackFrom: '#5c3320', fallbackVia: '#c47e4f', fallbackTo: '#8a5535',
     accent: '#c47e4f',
     large: true,
     note: '移住検討者が最も求める情報',
@@ -22,7 +24,7 @@ const sections = [
     label: '暮らしのリアル',
     labelEn: 'LIVING',
     description: '冬の生活環境・医療・スーパー・学校情報。移住前に知っておきたい生活情報。',
-    gradient: 'from-[#1a2a35] via-[#5b7e95] to-[#3d5a6e]',
+    fallbackFrom: '#1a2a35', fallbackVia: '#5b7e95', fallbackTo: '#3d5a6e',
     accent: '#5b7e95',
     large: false,
     note: null,
@@ -32,7 +34,7 @@ const sections = [
     label: '移住支援',
     labelEn: 'MIGRATION',
     description: '補助金・体験住宅・移住相談窓口。せたな町の移住支援制度一覧。',
-    gradient: 'from-[#1a3020] via-[#6b8f71] to-[#4a6b50]',
+    fallbackFrom: '#1a3020', fallbackVia: '#6b8f71', fallbackTo: '#4a6b50',
     accent: '#6b8f71',
     large: false,
     note: null,
@@ -53,14 +55,31 @@ const jsonLd = {
   },
 }
 
-export default function LifePage() {
+export default async function LifePage() {
+  const catSettings = await getAllCategorySettings()
+  const heroCs = catSettings['life']
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ヒーロー */}
       <section className="relative h-[50vh] min-h-[360px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a2a35] via-[#3d5a6e] to-[#2a3d2a]" />
+        {heroCs?.hero_image_url ? (
+          <Image
+            src={heroCs.hero_image_url}
+            alt={heroCs.hero_image_alt || 'せたな町に暮らす'}
+            fill
+            priority
+            className="object-cover object-center"
+            unoptimized
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(heroCs, '#1a2a35', '#3d5a6e', '#2a3d2a') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-14">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-5">
@@ -82,36 +101,57 @@ export default function LifePage() {
       <section className="py-16 lg:py-24 px-5 lg:px-8 bg-[#faf8f5]">
         <div className="max-w-[1120px] mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
-            {sections.map((sec) => (
-              <Link
-                key={sec.href}
-                href={sec.href}
-                className={`group block ${sec.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
-              >
-                <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
-                  <div className={`bg-gradient-to-br ${sec.gradient} ${sec.large ? 'h-52 lg:h-60' : 'h-40'}`} />
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-[10px] font-medium tracking-[0.2em] nav-label" style={{ color: sec.accent }}>
-                        {sec.labelEn}
+            {sections.map((sec) => {
+              const cs = catSettings[sec.href.replace(/^\//, '')]
+              const bg = buildGradient(cs, sec.fallbackFrom, sec.fallbackVia, sec.fallbackTo)
+              const heroUrl = cs?.hero_image_url
+              return (
+                <Link
+                  key={sec.href}
+                  href={sec.href}
+                  className={`group block ${sec.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
+                >
+                  <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+                    {heroUrl ? (
+                      <div className={`relative overflow-hidden ${sec.large ? 'h-52 lg:h-60' : 'h-40'}`}>
+                        <Image
+                          src={heroUrl}
+                          alt={cs?.hero_image_alt || sec.label}
+                          fill
+                          className="object-cover object-center"
+                          unoptimized
+                          sizes={sec.large ? '(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 747px' : '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 373px'}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`${sec.large ? 'h-52 lg:h-60' : 'h-40'}`}
+                        style={{ background: bg }}
+                      />
+                    )}
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-[10px] font-medium tracking-[0.2em] nav-label" style={{ color: sec.accent }}>
+                          {sec.labelEn}
+                        </p>
+                        {sec.note && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${sec.accent}18`, color: sec.accent }}>
+                            {sec.note}
+                          </span>
+                        )}
+                      </div>
+                      <h2 className={`font-bold text-[#1a1a1a] tracking-[0.02em] mb-2 ${sec.large ? 'text-[20px]' : 'text-[17px]'}`}>
+                        {sec.label}
+                      </h2>
+                      <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">{sec.description}</p>
+                      <p className="mt-4 text-[12px] font-medium nav-label transition-colors" style={{ color: sec.accent }}>
+                        くわしく見る →
                       </p>
-                      {sec.note && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${sec.accent}18`, color: sec.accent }}>
-                          {sec.note}
-                        </span>
-                      )}
                     </div>
-                    <h2 className={`font-bold text-[#1a1a1a] tracking-[0.02em] mb-2 ${sec.large ? 'text-[20px]' : 'text-[17px]'}`}>
-                      {sec.label}
-                    </h2>
-                    <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">{sec.description}</p>
-                    <p className="mt-4 text-[12px] font-medium nav-label transition-colors" style={{ color: sec.accent }}>
-                      くわしく見る →
-                    </p>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>

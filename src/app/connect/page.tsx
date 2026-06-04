@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
 
 export const metadata: Metadata = {
   title: 'せたなに関わる｜ふるさと納税・企業版ふるさと納税・ファミマッチ・関係人口',
@@ -12,7 +14,7 @@ const sections = [
     label: 'ふるさと納税',
     labelEn: 'FURUSATO',
     description: '返礼品と寄付金の使いみち、生産者の顔が見えるせたなのふるさと納税。特産品を楽しみながら町を応援できます。',
-    gradient: 'from-[#1a3028] via-[#4a7c6f] to-[#2d5a50]',
+    fallbackFrom: '#0f1e1b', fallbackVia: '#1a3028', fallbackTo: '#1a2820',
     accent: '#4a7c6f',
     large: true,
   },
@@ -21,7 +23,7 @@ const sections = [
     label: '企業版ふるさと納税',
     labelEn: 'CORPORATE',
     description: '法人として地域に貢献する制度。税制優遇と具体的な認定事業をご案内します。',
-    gradient: 'from-[#1a2530] via-[#3d5c6e] to-[#2a4050]',
+    fallbackFrom: '#0f1520', fallbackVia: '#1a2530', fallbackTo: '#1a3028',
     accent: '#3d5c6e',
     large: false,
   },
@@ -30,7 +32,7 @@ const sections = [
     label: 'ファミマッチ',
     labelEn: 'MATCH',
     description: '町内外の出会いをつなぐ、せたな町公認のマッチングサービス。',
-    gradient: 'from-[#301a10] via-[#8a6b5b] to-[#5c4035]',
+    fallbackFrom: '#2a1008', fallbackVia: '#7a3010', fallbackTo: '#b85a28',
     accent: '#8a6b5b',
     large: false,
   },
@@ -39,7 +41,7 @@ const sections = [
     label: '関係人口',
     labelEn: 'RELATION',
     description: '移住の前に、せたなと関わるもう一つの選択肢。二拠点・ワーケーション・ボランティア。',
-    gradient: 'from-[#1a2820] via-[#6b8a72] to-[#4a6b50]',
+    fallbackFrom: '#1a2820', fallbackVia: '#2d4028', fallbackTo: '#1a3028',
     accent: '#6b8a72',
     large: false,
   },
@@ -60,14 +62,31 @@ const jsonLd = {
   },
 }
 
-export default function ConnectPage() {
+export default async function ConnectPage() {
+  const catSettings = await getAllCategorySettings()
+  const heroCs = catSettings['connect']
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* ヒーロー */}
       <section className="relative h-[50vh] min-h-[360px] flex items-end overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f1e1b] via-[#1a3028] to-[#1a2030]" />
+        {heroCs?.hero_image_url ? (
+          <Image
+            src={heroCs.hero_image_url}
+            alt={heroCs.hero_image_alt || 'せたなに関わる'}
+            fill
+            priority
+            className="object-cover object-center"
+            unoptimized
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: buildGradient(heroCs, '#0f1e1b', '#1a3028', '#1a2030') }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="relative z-10 w-full max-w-[1120px] mx-auto px-5 lg:px-8 pb-14">
           <nav className="flex items-center gap-2 text-white/40 text-[12px] mb-5">
@@ -89,29 +108,50 @@ export default function ConnectPage() {
       <section className="py-16 lg:py-24 px-5 lg:px-8 bg-[#faf8f5]">
         <div className="max-w-[1120px] mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
-            {sections.map((sec) => (
-              <Link
-                key={sec.href}
-                href={sec.href}
-                className={`group block ${sec.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
-              >
-                <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
-                  <div className={`bg-gradient-to-br ${sec.gradient} ${sec.large ? 'h-52 lg:h-60' : 'h-40'}`} />
-                  <div className="p-6">
-                    <p className="text-[10px] font-medium tracking-[0.2em] nav-label mb-2" style={{ color: sec.accent }}>
-                      {sec.labelEn}
-                    </p>
-                    <h2 className={`font-bold text-[#1a1a1a] tracking-[0.02em] mb-2 ${sec.large ? 'text-[20px]' : 'text-[17px]'}`}>
-                      {sec.label}
-                    </h2>
-                    <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">{sec.description}</p>
-                    <p className="mt-4 text-[12px] font-medium nav-label transition-colors" style={{ color: sec.accent }}>
-                      くわしく見る →
-                    </p>
+            {sections.map((sec) => {
+              const cs = catSettings[sec.href.replace(/^\//, '')]
+              const bg = buildGradient(cs, sec.fallbackFrom, sec.fallbackVia, sec.fallbackTo)
+              const heroUrl = cs?.hero_image_url
+              return (
+                <Link
+                  key={sec.href}
+                  href={sec.href}
+                  className={`group block ${sec.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
+                >
+                  <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+                    {heroUrl ? (
+                      <div className={`relative overflow-hidden ${sec.large ? 'h-52 lg:h-60' : 'h-40'}`}>
+                        <Image
+                          src={heroUrl}
+                          alt={cs?.hero_image_alt || sec.label}
+                          fill
+                          className="object-cover object-center"
+                          unoptimized
+                          sizes={sec.large ? '(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 747px' : '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 373px'}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`${sec.large ? 'h-52 lg:h-60' : 'h-40'}`}
+                        style={{ background: bg }}
+                      />
+                    )}
+                    <div className="p-6">
+                      <p className="text-[10px] font-medium tracking-[0.2em] nav-label mb-2" style={{ color: sec.accent }}>
+                        {sec.labelEn}
+                      </p>
+                      <h2 className={`font-bold text-[#1a1a1a] tracking-[0.02em] mb-2 ${sec.large ? 'text-[20px]' : 'text-[17px]'}`}>
+                        {sec.label}
+                      </h2>
+                      <p className="text-[13px] text-[#5c5c5c] leading-[1.8]">{sec.description}</p>
+                      <p className="mt-4 text-[12px] font-medium nav-label transition-colors" style={{ color: sec.accent }}>
+                        くわしく見る →
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>

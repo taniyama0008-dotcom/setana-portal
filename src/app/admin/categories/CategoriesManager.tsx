@@ -6,6 +6,15 @@ import type { CategorySetting } from '@/lib/types'
 
 const SECTIONS = [
   {
+    sectionLabel: 'SECTION HEROES',
+    accent: '#1a1a1a',
+    categories: [
+      { path: 'travel',  label: 'せたなを旅する (/travel)' },
+      { path: 'life',    label: 'せたなに暮らす (/life)' },
+      { path: 'connect', label: 'せたなに関わる (/connect)' },
+    ],
+  },
+  {
     sectionLabel: 'TRAVEL',
     accent: '#c47e4f',
     categories: [

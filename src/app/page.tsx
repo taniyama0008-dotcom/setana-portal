@@ -47,6 +47,14 @@ const travelCards = [
     fallbackFrom: '#2a2a2a', fallbackVia: '#4a4a4a', fallbackTo: '#3a3a3a',
     accent: '#6e6e6e',
   },
+  {
+    href: '/travel/fishing',
+    label: '釣り',
+    labelEn: 'FISHING',
+    description: '日本海で楽しむ磯釣り・船釣り。',
+    fallbackFrom: '#1a2e20', fallbackVia: '#2d5c3a', fallbackTo: '#1a3040',
+    accent: '#2d5c3a',
+  },
 ]
 
 const connectCards = [
