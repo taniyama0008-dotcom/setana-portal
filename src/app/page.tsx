@@ -276,6 +276,7 @@ export default async function Home() {
             {travelCards.map((card, i) => {
               const cs = catSettings[card.href.replace(/^\//, '')]
               const bg = buildGradient(cs, card.fallbackFrom, card.fallbackVia, card.fallbackTo)
+              const heroUrl = cs?.hero_image_url
               return (
                 <Link
                   key={card.href}
@@ -283,13 +284,26 @@ export default async function Home() {
                   className={`group block ${i === 0 ? 'col-span-2 lg:col-span-2' : 'col-span-1'}`}
                 >
                   <div className="relative overflow-hidden rounded-[8px]">
-                    {/* 背景 */}
-                    <div
-                      className={`${i === 0 ? 'h-52 lg:h-64' : 'h-36 lg:h-48'} group-hover:scale-[1.02] transition-transform duration-500`}
-                      style={{ background: bg }}
-                    />
-                    {/* オーバーレイ */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    {/* 背景: 画像またはグラデーション */}
+                    {heroUrl ? (
+                      <div className={`relative ${i === 0 ? 'h-52 lg:h-64' : 'h-36 lg:h-48'}`}>
+                        <Image
+                          src={heroUrl}
+                          alt={cs?.hero_image_alt || card.label}
+                          fill
+                          className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+                          unoptimized
+                          sizes={i === 0 ? '(max-width: 1024px) 100vw, 448px' : '(max-width: 1024px) 50vw, 224px'}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`${i === 0 ? 'h-52 lg:h-64' : 'h-36 lg:h-48'} group-hover:scale-[1.02] transition-transform duration-500`}
+                        style={{ background: bg }}
+                      />
+                    )}
+                    {/* スクリム */}
+                    <div className={`absolute inset-0 bg-gradient-to-t ${heroUrl ? 'from-black/70 via-black/40 to-black/10' : 'from-black/70 via-black/20 to-transparent'}`} />
                     {/* テキスト */}
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <p className="text-white/50 text-[10px] font-medium tracking-[0.2em] mb-1 nav-label">{card.labelEn}</p>
@@ -329,6 +343,7 @@ export default async function Home() {
             {lifeCards.map((card) => {
               const cs = catSettings[card.href.replace(/^\//, '')]
               const bg = buildGradient(cs, card.fallbackFrom, card.fallbackVia, card.fallbackTo)
+              const heroUrl = cs?.hero_image_url
               return (
                 <Link
                   key={card.href}
@@ -337,10 +352,23 @@ export default async function Home() {
                 >
                   <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
                     {/* 写真エリア */}
-                    <div
-                      className={`${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
-                      style={{ background: bg }}
-                    />
+                    {heroUrl ? (
+                      <div className={`relative overflow-hidden ${card.large ? 'h-48 lg:h-56' : 'h-36'}`}>
+                        <Image
+                          src={heroUrl}
+                          alt={cs?.hero_image_alt || card.label}
+                          fill
+                          className="object-cover object-center"
+                          unoptimized
+                          sizes={card.large ? '(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 747px' : '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 373px'}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
+                        style={{ background: bg }}
+                      />
+                    )}
                     {/* テキストエリア */}
                     <div className="p-6">
                       <p className="text-[10px] font-medium tracking-[0.2em] mb-2 nav-label" style={{ color: card.accent }}>
@@ -385,6 +413,7 @@ export default async function Home() {
             {connectCards.map((card) => {
               const cs = catSettings[card.href.replace(/^\//, '')]
               const bg = buildGradient(cs, card.fallbackFrom, card.fallbackVia, card.fallbackTo)
+              const heroUrl = cs?.hero_image_url
               return (
                 <Link
                   key={card.href}
@@ -392,10 +421,23 @@ export default async function Home() {
                   className={`group block ${card.large ? 'sm:col-span-2' : 'sm:col-span-1'}`}
                 >
                   <div className="relative overflow-hidden rounded-[10px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-shadow duration-300">
-                    <div
-                      className={`${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
-                      style={{ background: bg }}
-                    />
+                    {heroUrl ? (
+                      <div className={`relative overflow-hidden ${card.large ? 'h-48 lg:h-56' : 'h-36'}`}>
+                        <Image
+                          src={heroUrl}
+                          alt={cs?.hero_image_alt || card.label}
+                          fill
+                          className="object-cover object-center"
+                          unoptimized
+                          sizes={card.large ? '(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 747px' : '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 373px'}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className={`${card.large ? 'h-48 lg:h-56' : 'h-36'}`}
+                        style={{ background: bg }}
+                      />
+                    )}
                     <div className="p-6">
                       <p className="text-[10px] font-medium tracking-[0.2em] mb-2 nav-label" style={{ color: card.accent }}>
                         {card.labelEn}

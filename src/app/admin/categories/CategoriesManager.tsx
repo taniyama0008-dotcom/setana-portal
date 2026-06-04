@@ -77,16 +77,36 @@ export default function CategoriesManager({ settingsMap }: Props) {
   }
 
   async function handleUpload(path: string, file: File) {
+    const MAX_SIZE = 20 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      alert('ファイルサイズは20MB以下にしてください。')
+      return
+    }
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
+    if (!allowed.includes(file.type) && !file.name.toLowerCase().endsWith('.heic')) {
+      alert('JPEG・PNG・WebP・HEIC 形式のファイルのみアップロードできます。')
+      return
+    }
+
     updateRow(path, { isUploading: true })
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('categoryPath', path)
-    const res  = await fetch('/api/admin/upload-category-image', { method: 'POST', body: fd })
-    const json = await res.json() as { success?: boolean; url?: string; error?: string }
-    if (json.success && json.url) {
-      updateRow(path, { heroImageUrl: json.url, isUploading: false })
-    } else {
-      alert(`アップロードに失敗しました: ${json.error ?? ''}`)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('categoryPath', path)
+      const res = await fetch('/api/admin/upload-category-image', { method: 'POST', body: fd })
+      let json: { success?: boolean; url?: string; error?: string }
+      try {
+        json = await res.json()
+      } catch {
+        throw new Error(`サーバーエラー (HTTP ${res.status})`)
+      }
+      if (json.success && json.url) {
+        updateRow(path, { heroImageUrl: json.url, isUploading: false })
+      } else {
+        throw new Error(json.error ?? 'アップロードに失敗しました')
+      }
+    } catch (err) {
+      alert(`アップロードに失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`)
       updateRow(path, { isUploading: false })
     }
   }
