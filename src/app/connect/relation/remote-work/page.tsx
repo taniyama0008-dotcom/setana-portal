@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '副業・リモートワーク｜関係人口 — せたな町',
   description: 'せたな町の事業者・農家・行政とプロジェクト型で関わる副業・リモートワーク情報。',
+  alternates: { canonical: '/connect/relation/remote-work' },
 }
 
 const jsonLd = {

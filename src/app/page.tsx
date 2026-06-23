@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -5,6 +6,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import SpotCard from '@/components/spot/SpotCard'
 import type { Spot, CalendarEvent, Report, PhotoCard } from '@/lib/types'
 import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 const travelCards = [
   {

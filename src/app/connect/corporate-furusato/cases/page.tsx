@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '寄付実績企業｜企業版ふるさと納税 — せたな町',
   description: 'せたな町への企業版ふるさと納税の実績。寄付企業と活用事業をご紹介します。',
+  alternates: { canonical: '/connect/corporate-furusato/cases' },
 }
 
 const jsonLd = {

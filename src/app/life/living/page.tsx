@@ -11,6 +11,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町の暮らしのリアル｜移住前に知っておきたい生活情報',
   description: '北海道せたな町の生活情報。冬の環境・医療・スーパー・学校・交通など、移住前に知っておくべき暮らしのリアル。',
+  alternates: { canonical: '/life/living' },
 }
 
 const topics = [

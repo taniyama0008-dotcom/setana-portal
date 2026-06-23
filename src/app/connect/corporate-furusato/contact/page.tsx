@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '相談・お問い合わせ｜企業版ふるさと納税 — せたな町',
   description: '企業版ふるさと納税についてのご相談・お問い合わせ窓口。せたな町担当者が丁寧にご案内します。',
+  alternates: { canonical: '/connect/corporate-furusato/contact' },
 }
 
 const jsonLd = {

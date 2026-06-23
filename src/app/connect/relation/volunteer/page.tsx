@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'ボランティア・地域活動｜関係人口 — せたな町',
   description: 'せたな町での農業体験・祭り・地域行事への参加。短期から長期までボランティアを受け入れています。',
+  alternates: { canonical: '/connect/relation/volunteer' },
 }
 
 const jsonLd = {

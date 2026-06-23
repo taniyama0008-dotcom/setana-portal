@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'プライバシーポリシー | SETANA',
   description: 'SETANAのプライバシーポリシー。個人情報の取り扱いについて。',
+  alternates: { canonical: '/privacy' },
 }
 
 const sections = [

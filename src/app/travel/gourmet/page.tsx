@@ -11,6 +11,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町グルメ｜地元おすすめの飲食店・海鮮',
   description: '北海道せたな町のグルメ情報。地元食堂、海鮮、カフェ、菓子店など飲食スポット一覧。',
+  alternates: { canonical: '/travel/gourmet' },
 }
 
 const jsonLd = {

@@ -6,6 +6,7 @@ import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
 export const metadata: Metadata = {
   title: 'せたな町に暮らす｜移住・仕事・生活情報',
   description: '北海道せたな町の移住・生活情報。求人・しごと、暮らしのリアル、移住支援制度まとめ。',
+  alternates: { canonical: '/life' },
 }
 
 const sections = [

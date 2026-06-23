@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'よくある質問｜ふるさと納税 — せたな町',
   description: 'せたな町ふるさと納税に関するよくある質問と回答。申し込み方法・税控除・返礼品発送など。',
+  alternates: { canonical: '/connect/furusato/faq' },
 }
 
 const jsonLd = {

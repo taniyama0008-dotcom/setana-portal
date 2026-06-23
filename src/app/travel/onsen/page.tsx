@@ -11,6 +11,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町の温泉｜日帰り・宿泊温泉ガイド',
   description: '北海道せたな町の温泉情報。日帰り温泉・温泉宿泊施設の一覧。旅の疲れを癒すせたなの湯。',
+  alternates: { canonical: '/travel/onsen' },
 }
 
 export default async function OnsenPage() {

@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '二拠点・ワーケーション｜関係人口 — せたな町',
   description: 'せたな町でワーケーション。日本海と山に囲まれた環境でリモートワーク。二拠点生活の拠点としてのせたな。',
+  alternates: { canonical: '/connect/relation/workation' },
 }
 
 const jsonLd = {

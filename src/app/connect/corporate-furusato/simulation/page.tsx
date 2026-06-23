@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '税制優遇シミュレーション｜企業版ふるさと納税 — せたな町',
   description: '企業版ふるさと納税の税制優遇シミュレーション。寄付額に応じた法人税・住民税・事業税の軽減効果を確認できます。',
+  alternates: { canonical: '/connect/corporate-furusato/simulation' },
 }
 
 const jsonLd = {

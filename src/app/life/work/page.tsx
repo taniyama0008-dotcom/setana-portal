@@ -9,6 +9,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町の求人・しごと｜移住者向け仕事情報',
   description: '北海道せたな町の求人情報。正規雇用・季節労働・地域おこし協力隊まで、せたなで働く仕事一覧。',
+  alternates: { canonical: '/life/work' },
 }
 
 const typeLabel: Record<string, string> = {

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'お問い合わせ | SETANA',
   description: 'SETANAへのお問い合わせ、掲載依頼、取材相談はこちら。',
+  alternates: { canonical: '/contact' },
 }
 
 export default function ContactPage() {

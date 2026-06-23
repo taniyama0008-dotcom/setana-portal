@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'SETANAについて',
   description:
     'SETANAは北海道久遠郡せたな町の暮らし・食・自然を伝える独立メディアです。運営会社・編集方針・お問い合わせ先をご案内します。',
+  alternates: { canonical: '/about' },
   openGraph: {
     title: 'SETANAについて | SETANA',
     description:

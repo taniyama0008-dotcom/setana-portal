@@ -8,6 +8,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町の移住支援｜補助金・体験住宅・相談窓口',
   description: '北海道せたな町の移住支援制度。移住補助金・体験住宅・移住相談窓口の情報まとめ。',
+  alternates: { canonical: '/life/migration' },
 }
 
 const supports = [

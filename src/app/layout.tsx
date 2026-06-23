@@ -20,6 +20,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.setana.life'),
   title: {
     default: 'SETANA — 北海道せたな町の暮らし・食・自然',
     template: '%s | SETANA',

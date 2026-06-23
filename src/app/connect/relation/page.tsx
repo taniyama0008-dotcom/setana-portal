@@ -8,6 +8,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: '関係人口として関わる｜せたな町 — 二拠点・ワーケーション・ボランティア',
   description: '移住の前に、せたなと関わるもう一つの選択肢。二拠点生活・ワーケーション・副業リモートワーク・ボランティア活動でせたな町とつながる。',
+  alternates: { canonical: '/connect/relation' },
 }
 
 const subPages = [

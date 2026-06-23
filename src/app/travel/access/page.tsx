@@ -9,6 +9,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町へのアクセス｜札幌・函館・新千歳からの交通案内',
   description: '北海道せたな町へのアクセス方法。札幌・函館・新千歳空港からの所要時間・交通手段・冬季注意点。',
+  alternates: { canonical: '/travel/access' },
 }
 
 const routes = [

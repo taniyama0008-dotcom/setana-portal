@@ -11,6 +11,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'せたな町の観光・自然スポット｜絶景・アクティビティ',
   description: '北海道せたな町の観光・自然スポット一覧。三本杉岩、狩場山、チャレンカの滝など絶景・自然体験。',
+  alternates: { canonical: '/travel/nature' },
 }
 
 const jsonLd = {

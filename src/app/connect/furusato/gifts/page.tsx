@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '返礼品を探す｜ふるさと納税 — せたな町',
   description: 'せたな町ふるさと納税の返礼品一覧。日本海の海産物・山の恵み・加工品など、せたならではの品々。',
+  alternates: { canonical: '/connect/furusato/gifts' },
 }
 
 const jsonLd = {

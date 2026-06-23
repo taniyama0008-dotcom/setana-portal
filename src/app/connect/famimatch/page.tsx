@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: 'ファミマッチ | 「うちの子をよろしく」が届く婚活 - SETANA',
   description:
     'せたな町での暮らしに興味のある町外の方と、町内の独身を出会わせるインターネット婚活サービス。運営：株式会社つなぐ。',
+  alternates: { canonical: '/connect/famimatch' },
 }
 
 const jsonLd = {

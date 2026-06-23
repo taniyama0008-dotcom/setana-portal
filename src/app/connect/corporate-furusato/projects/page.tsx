@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '認定対象事業｜企業版ふるさと納税 — せたな町',
   description: 'せたな町が推進する企業版ふるさと納税の認定対象プロジェクト一覧。',
+  alternates: { canonical: '/connect/corporate-furusato/projects' },
 }
 
 const jsonLd = {

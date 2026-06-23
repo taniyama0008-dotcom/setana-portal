@@ -6,6 +6,7 @@ import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
 export const metadata: Metadata = {
   title: 'せたなに関わる｜ふるさと納税・企業版ふるさと納税・ファミマッチ・関係人口',
   description: '北海道せたな町への関わり方。ふるさと納税・企業版ふるさと納税・ファミマッチ・関係人口として、旅でも移住でもない新しいつながりを。',
+  alternates: { canonical: '/connect' },
 }
 
 const sections = [

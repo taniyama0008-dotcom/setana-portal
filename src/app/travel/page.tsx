@@ -9,6 +9,7 @@ import { getAllCategorySettings, buildGradient } from '@/lib/category-settings'
 export const metadata: Metadata = {
   title: 'せたな町を旅する｜グルメ・温泉・自然の観光ガイド',
   description: '北海道せたな町の旅行情報。グルメ・観光・自然・温泉・宿泊・アクセスまでまとめた観光ガイド。',
+  alternates: { canonical: '/travel' },
 }
 
 const subSections = [

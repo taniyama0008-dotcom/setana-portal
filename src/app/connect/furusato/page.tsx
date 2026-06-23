@@ -8,6 +8,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'ふるさと納税｜せたな町 — 返礼品・生産者・寄付金の使いみち',
   description: 'せたな町のふるさと納税。日本海の幸や山の恵みの返礼品、寄付金の使いみち、生産者のストーリーをご紹介します。',
+  alternates: { canonical: '/connect/furusato' },
 }
 
 const subPages = [

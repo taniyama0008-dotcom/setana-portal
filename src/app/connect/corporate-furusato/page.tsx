@@ -8,6 +8,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: '企業版ふるさと納税｜せたな町 — 法人による地域貢献',
   description: 'せたな町への企業版ふるさと納税。法人税・住民税・事業税の税制優遇と具体的な認定事業、寄付実績企業をご案内します。',
+  alternates: { canonical: '/connect/corporate-furusato' },
 }
 
 const subPages = [

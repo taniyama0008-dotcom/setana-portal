@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '寄付金の使いみち｜ふるさと納税 — せたな町',
   description: 'せたな町ふるさと納税の寄付金がどのように活用されているかをご報告します。',
+  alternates: { canonical: '/connect/furusato/usage' },
 }
 
 const jsonLd = {

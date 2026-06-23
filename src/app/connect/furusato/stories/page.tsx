@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '生産者ストーリー｜ふるさと納税 — せたな町',
   description: 'せたな町ふるさと納税を支える生産者たちの顔と物語。海・山・大地の恵みを届ける人々をご紹介します。',
+  alternates: { canonical: '/connect/furusato/stories' },
 }
 
 const jsonLd = {

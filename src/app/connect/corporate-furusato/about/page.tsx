@@ -4,6 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: '制度について｜企業版ふるさと納税 — せたな町',
   description: '企業版ふるさと納税の仕組みと税制優遇の概要。法人税・住民税・事業税の軽減効果をご説明します。',
+  alternates: { canonical: '/connect/corporate-furusato/about' },
 }
 
 const jsonLd = {
