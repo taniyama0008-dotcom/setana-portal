@@ -10,6 +10,21 @@ async function assertAdmin() {
   if (role !== 'admin') throw new Error('Forbidden')
 }
 
+function revalidateSpotListPages(slug?: string) {
+  const paths = [
+    '/',
+    '/travel',
+    '/travel/gourmet',
+    '/travel/nature',
+    '/travel/fishing',
+    '/travel/stay',
+    '/travel/onsen',
+    '/life/living',
+  ]
+  for (const path of paths) revalidatePath(path)
+  if (slug) revalidatePath(`/spot/${slug}`)
+}
+
 // ── 口コミ ──────────────────────────────────────────────
 export async function updateReviewStatus(reviewId: string, status: 'public' | 'hidden' | 'pending') {
   await assertAdmin()
@@ -28,15 +43,19 @@ export async function deleteReview(reviewId: string) {
 // ── スポット ─────────────────────────────────────────────
 export async function updateSpotStatus(spotId: string, status: string) {
   await assertAdmin()
+  const { data: spotInfo } = await supabaseAdmin.from('spots').select('slug').eq('id', spotId).single()
   await supabaseAdmin.from('spots').update({ status }).eq('id', spotId)
   revalidatePath('/admin/spots')
+  revalidateSpotListPages(spotInfo?.slug ?? undefined)
   return { success: true }
 }
 
 export async function deleteSpot(spotId: string) {
   await assertAdmin()
+  const { data: spotInfo } = await supabaseAdmin.from('spots').select('slug').eq('id', spotId).single()
   await supabaseAdmin.from('spots').delete().eq('id', spotId)
   revalidatePath('/admin/spots')
+  revalidateSpotListPages(spotInfo?.slug ?? undefined)
   return { success: true }
 }
 
@@ -167,13 +186,8 @@ export async function updateSpotImageType(imageId: string, spotId: string, image
   await supabaseAdmin.from('spots').update({ cover_image: coverUrl }).eq('id', spotId)
 
   const { data: spotInfo } = await supabaseAdmin.from('spots').select('slug').eq('id', spotId).single()
-  if (spotInfo?.slug) revalidatePath(`/spot/${spotInfo.slug}`)
-  revalidatePath('/travel/stay')
-  revalidatePath('/travel/gourmet')
-  revalidatePath('/travel/onsen')
-  revalidatePath('/travel/nature')
-  revalidatePath('/travel/fishing')
   revalidatePath(`/admin/spots/${spotId}/images`)
+  revalidateSpotListPages(spotInfo?.slug ?? undefined)
 
   return { success: true }
 }
@@ -223,13 +237,8 @@ export async function deleteSpotImageWithPromotion(imageId: string, spotId: stri
   }
 
   const { data: spotInfo } = await supabaseAdmin.from('spots').select('slug').eq('id', spotId).single()
-  if (spotInfo?.slug) revalidatePath(`/spot/${spotInfo.slug}`)
-  revalidatePath('/travel/stay')
-  revalidatePath('/travel/gourmet')
-  revalidatePath('/travel/onsen')
-  revalidatePath('/travel/nature')
-  revalidatePath('/travel/fishing')
   revalidatePath(`/admin/spots/${spotId}/images`)
+  revalidateSpotListPages(spotInfo?.slug ?? undefined)
   return { success: true }
 }
 
@@ -365,7 +374,7 @@ export async function updateSpot(_prev: unknown, formData: FormData) {
   }
 
   revalidatePath('/admin/spots')
-  revalidatePath(`/spot/${slug}`)
+  revalidateSpotListPages(slug)
   return { success: true }
 }
 
@@ -409,5 +418,6 @@ export async function createSpot(_prev: unknown, formData: FormData) {
   }
 
   revalidatePath('/admin/spots')
+  revalidateSpotListPages(payload.slug)
   redirect(`/admin/spots/${created.id}/edit`)
 }
