@@ -33,6 +33,37 @@ const sections = [
     title: '5. 免責事項',
     body: '当サイトに掲載された情報の正確性には万全を期しておりますが、利用者が当サイトの情報を用いて行う一切の行為について責任を負いません。',
   },
+  {
+    title: '6. 求職者の個人情報について',
+    body: '当サイトの求人情報を通じてご応募いただく際、以下の個人情報をお預かりする場合があります。',
+    list: [
+      '氏名・住所・電話番号・メールアドレス等の連絡先情報',
+      '職歴・学歴・資格・スキル等の応募書類に記載の情報',
+      '志望動機・自己PR等の応募内容',
+    ],
+    subsections: [
+      {
+        subtitle: '利用目的',
+        items: [
+          '応募先の求人企業・事業者への応募情報の提供',
+          '採用選考に関するご連絡',
+          '求人サービスの運営・改善',
+        ],
+      },
+      {
+        subtitle: '第三者提供',
+        text: 'ご応募いただいた情報は、応募先の求人企業・事業者に提供いたします。それ以外の第三者への提供は、ご本人の同意がある場合または法令に基づく場合を除き行いません。',
+      },
+      {
+        subtitle: '保管期間',
+        text: '採用選考終了後6ヶ月を目途に削除いたします。ただし、法令により保存が義務付けられている場合はこの限りではありません。',
+      },
+      {
+        subtitle: '開示・訂正・削除のご請求',
+        text: 'ご自身の個人情報について開示・訂正・削除をご希望の場合は、お問い合わせページよりご連絡ください。ご本人確認のうえ、速やかに対応いたします。',
+      },
+    ],
+  },
 ]
 
 export default function PrivacyPage() {
@@ -60,12 +91,37 @@ export default function PrivacyPage() {
                 ))}
               </ul>
             )}
+            {s.subsections && (
+              <div className="mt-5 space-y-5">
+                {s.subsections.map((sub) => (
+                  <div key={sub.subtitle}>
+                    <h3 className="text-[14px] font-semibold text-[#1a1a1a] mb-2 tracking-[0.02em]">
+                      {sub.subtitle}
+                    </h3>
+                    {sub.text && (
+                      <p className="text-[14px] text-[#3a3a3a] leading-[1.9] tracking-[0.04em]">
+                        {sub.text}
+                      </p>
+                    )}
+                    {sub.items && (
+                      <ul className="space-y-1 pl-4">
+                        {sub.items.map((item) => (
+                          <li key={item} className="text-[14px] text-[#3a3a3a] leading-[1.9] tracking-[0.04em] list-disc">
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         ))}
 
         <section>
           <h2 className="text-[16px] font-semibold text-[#1a1a1a] mb-3 tracking-[0.02em]">
-            6. お問い合わせ
+            7. お問い合わせ
           </h2>
           <p className="text-[14px] text-[#3a3a3a] leading-[1.9] tracking-[0.04em]">
             プライバシーポリシーに関するお問い合わせは{' '}
@@ -77,7 +133,7 @@ export default function PrivacyPage() {
         </section>
       </div>
 
-      <p className="mt-14 text-[12px] text-[#8a8a8a]">制定日: 2025年4月</p>
+      <p className="mt-14 text-[12px] text-[#8a8a8a]">制定日: 2025年4月　最終改定: 2026年7月</p>
     </div>
   )
 }
