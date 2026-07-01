@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import ContactEmail from './ContactEmail'
 
 export const metadata: Metadata = {
   title: 'お問い合わせ | SETANA',
@@ -21,7 +22,7 @@ export default function ContactPage() {
 
         <div className="flex gap-4 text-[14px] text-[#5c5c5c]">
           <span className="text-[#8a8a8a] shrink-0">メール</span>
-          <span>[メールアドレスを後で入れる]</span>
+          <ContactEmail />
         </div>
 
         <p className="text-[13px] text-[#8a8a8a] leading-[1.8]">
