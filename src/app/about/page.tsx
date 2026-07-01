@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import AboutEmail from './AboutEmail'
 
 export const metadata: Metadata = {
   title: 'SETANAについて',
@@ -28,6 +29,7 @@ const organizationSchema = {
     '@type': 'PostalAddress',
     addressRegion: '北海道',
     addressLocality: '久遠郡せたな町',
+    streetAddress: '北檜山区北檜山17',
     addressCountry: 'JP',
   },
   description:
@@ -35,7 +37,7 @@ const organizationSchema = {
   founder: {
     '@type': 'Person',
     '@id': 'https://www.setana.life/about#person-taniyama',
-    name: '谷山（フルネームは後日追記）',
+    name: '谷山 浩司',
   },
 }
 
@@ -43,7 +45,7 @@ const personSchema = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   '@id': 'https://www.setana.life/about#person-taniyama',
-  name: '谷山（フルネームは後日追記）',
+  name: '谷山 浩司',
   jobTitle: '代表',
   worksFor: {
     '@id': 'https://www.setana.life/#organization',
@@ -51,6 +53,7 @@ const personSchema = {
   address: {
     '@type': 'PostalAddress',
     addressLocality: '北海道久遠郡せたな町',
+    streetAddress: '北檜山区北檜山17',
     addressCountry: 'JP',
   },
   description:
@@ -267,10 +270,10 @@ export default function AboutPage() {
               </h3>
               <dl className="space-y-4">
                 {[
-                  { label: '所在地', value: '北海道久遠郡せたな町（詳細住所は後日追記）' },
-                  { label: '代表者', value: '谷山（フルネームは後日追記）' },
-                  { label: '設立', value: '（後日追記）' },
-                  { label: '事業内容', value: '地域メディア運営・地域コーディネート事業' },
+                  { label: '所在地', value: '北海道久遠郡せたな町北檜山区北檜山17' },
+                  { label: '代表者', value: '谷山 浩司' },
+                  { label: '設立', value: '2023年11月' },
+                  { label: '事業内容', value: 'ふるさと納税運用代行・地域メディア運営・地域コーディネート事業' },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex gap-5 text-[13px]">
                     <dt className="text-[#8a8a8a] w-[5em] shrink-0 tracking-[0.04em]">
@@ -293,7 +296,7 @@ export default function AboutPage() {
                 EDITOR IN CHIEF
               </p>
               <h3 className="text-[18px] font-semibold text-[#1a1a1a] tracking-[0.03em] mb-2">
-                谷山（フルネームは後日追記）
+                谷山 浩司
               </h3>
               <p className="text-[12px] text-[#8a8a8a] tracking-[0.04em] mb-5">
                 代表 / 編集長
@@ -360,7 +363,7 @@ export default function AboutPage() {
             <div className="pt-6 border-t border-[#efefef]">
               <p className="text-[12px] text-[#8a8a8a] tracking-[0.04em] leading-[1.8]">
                 お急ぎの場合は直接メールにてご連絡ください。<br />
-                <span className="text-[#5c5c5c]">（メールアドレスは後日追記）</span>
+                <AboutEmail />
               </p>
             </div>
           </div>
